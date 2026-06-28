@@ -1,15 +1,26 @@
 import os
-from docling.document_converter import DocumentConverter, PdfFormatOption
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.datamodel.base_models import InputFormat
-from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 
 
 def parse_pdf(uploaded_file, max_pages: int = None) -> str:
     """
     Uses IBM Docling to extract text from PDFs.
     max_pages: cap processing for dev/testing. None = entire document.
+
+    Docling (and its heavy torch/transformers dependencies) is imported lazily
+    here — it takes ~20s to import, which would otherwise block the Upload page
+    from rendering on every load.
     """
+    try:
+        from docling.document_converter import DocumentConverter, PdfFormatOption
+        from docling.datamodel.pipeline_options import PdfPipelineOptions
+        from docling.datamodel.base_models import InputFormat
+        from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
+    except ImportError as e:
+        raise RuntimeError(
+            "PDF parsing needs the 'docling' package, which isn't installed. "
+            "Install it, or use Excel/CSV/URL sources instead."
+        ) from e
+
     os.makedirs("uploads", exist_ok=True)
 
     temp_path = os.path.join("uploads", uploaded_file.name)

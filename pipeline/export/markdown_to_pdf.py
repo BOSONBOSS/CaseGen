@@ -61,11 +61,34 @@ table {{ font-size: 11pt; }}
 
 
 def markdown_to_pdf(markdown: str) -> bytes:
-    """Convert Markdown to PDF bytes."""
-    from weasyprint import HTML
+    """Convert Markdown to PDF bytes.
 
+    Prefers WeasyPrint (best fidelity) but falls back to xhtml2pdf, which is
+    pure-Python and installs cleanly on Windows without GTK system libraries.
+    """
     html = _markdown_to_html(markdown)
-    pdf_buffer = io.BytesIO()
-    HTML(string=html).write_pdf(pdf_buffer)
-    pdf_buffer.seek(0)
-    return pdf_buffer.read()
+
+    # 1. Preferred: WeasyPrint (needs GTK libs; often unavailable on Windows)
+    try:
+        from weasyprint import HTML
+        pdf_buffer = io.BytesIO()
+        HTML(string=html).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
+        return pdf_buffer.read()
+    except (ImportError, OSError):
+        pass
+
+    # 2. Fallback: xhtml2pdf (pure-Python, built on reportlab)
+    try:
+        from xhtml2pdf import pisa
+        pdf_buffer = io.BytesIO()
+        result = pisa.CreatePDF(src=html, dest=pdf_buffer)
+        if result.err:
+            raise RuntimeError("xhtml2pdf failed to render the document.")
+        pdf_buffer.seek(0)
+        return pdf_buffer.read()
+    except ImportError as e:
+        raise RuntimeError(
+            "PDF export needs either 'weasyprint' or 'xhtml2pdf'. "
+            "Install one (xhtml2pdf is easiest on Windows), or use the Word export."
+        ) from e
