@@ -60,7 +60,7 @@ OUTPUT ONLY VALID JSON — no prose, no markdown fences.
   "themes": ["Theme 1", "Theme 2"],
   "raw_facts": ["other hard facts"],
   "tagged_facts": [
-    {{s
+    {{
       "fact": "specific fact",
       "theme_tags": ["Theme 1"],
       "source": null

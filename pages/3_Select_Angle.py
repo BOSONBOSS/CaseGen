@@ -1,3 +1,5 @@
+import json
+import os
 import streamlit as st
 from pipeline.agents.agent_extractor import run_agent_1
 from pipeline.agents.theme_filter import filter_by_theme
@@ -73,7 +75,7 @@ if "fact_sheet" not in st.session_state:
         st.session_state["fact_sheet"] = fact_sheet
         st.session_state["themes"] = fact_sheet.themes
 
-        import json, os
+        # import json, os
         os.makedirs("session_backup", exist_ok=True)
         with open("session_backup/fact_sheet.json", "w", encoding="utf-8") as f:
             f.write(fact_sheet.model_dump_json(indent=2))
