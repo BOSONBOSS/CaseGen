@@ -1,5 +1,8 @@
 """Agent 4 — Editor: merge, fact-check, bias, privacy, citations."""
 
+import re
+from datetime import datetime
+
 from pipeline.agents.llm_client import generate_text
 from pipeline.models.schemas import FactSheet
 
@@ -28,7 +31,10 @@ def _merge_document(
             parts.append(f"\n## {title}\n\n{body}\n")
 
     if exhibits and exhibits.strip():
-        parts.append(f"\n## Exhibits\n\n{exhibits.strip()}\n")
+        # Strip a leading "## Exhibits" the model may already have emitted, so we
+        # don't end up with two stacked headings.
+        ex = re.sub(r"^\s*#{1,6}\s*Exhibits\s*\n+", "", exhibits.strip(), flags=re.IGNORECASE)
+        parts.append(f"\n## Exhibits\n\n{ex.strip()}\n")
 
     if discussion_questions:
         parts.append("\n## Discussion Questions\n")
@@ -42,6 +48,19 @@ def _fact_sheet_text(fact_sheet: FactSheet) -> str:
     return fact_sheet.model_dump_json()
 
 
+def _citation_year(fact_sheet: FactSheet) -> str:
+    """Best-guess publication year: latest year mentioned in revenue/timeline,
+    capped at the current year. Falls back to the current year (NOT the founding
+    year, which would mis-date every reference)."""
+    blob = " ".join(
+        [fact_sheet.revenue or ""] + [(e.year or "") for e in fact_sheet.timeline_events]
+    )
+    current = datetime.now().year
+    years = [int(y) for y in re.findall(r"(?:19|20)\d{2}", blob)]
+    years = [y for y in years if y <= current]
+    return str(max(years)) if years else str(current)
+
+
 def _build_references(
     master_transcript: dict,
     fact_sheet: FactSheet,
@@ -50,21 +69,23 @@ def _build_references(
 ) -> str:
     lines = ["\n## References\n"]
     sources = list(master_transcript.keys()) if isinstance(master_transcript, dict) else []
-    year = fact_sheet.founding_year or "2024"
+    year = _citation_year(fact_sheet)
+    # Avoid "Ltd.." when the company name already ends in a period.
+    name = (company_name or "Company").rstrip(".")
 
     for i, source in enumerate(sources, 1):
         fmt = (citation_format or "APA (7th Edition)").lower()
         if "ifqm" in fmt:
-            lines.append(f"{i}. {company_name} ({year}). *{source}*. Retrieved from company records.")
+            lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
         elif "mla" in fmt:
-            lines.append(f"{i}. {company_name}. *{source}*. {year}.")
+            lines.append(f"{i}. {name}. *{source}*. {year}.")
         elif "chicago" in fmt:
-            lines.append(f"{i}. {company_name}, *{source}* ({year}).")
+            lines.append(f"{i}. {name}, *{source}* ({year}).")
         else:
-            lines.append(f"{i}. {company_name}. ({year}). *{source}*.")
+            lines.append(f"{i}. {name}. ({year}). *{source}*.")
 
     if not sources:
-        lines.append(f"1. {company_name}. ({year}). Source documents provided by user.")
+        lines.append(f"1. {name}. ({year}). Source documents provided by user.")
 
     return "\n".join(lines) + "\n"
 

@@ -266,7 +266,7 @@ def run_agent_1(
         partials.append(result)
         if on_progress:
             on_progress(batch_num, total_batches)
-    non_empty = sum(1 for p in partials if p is not None)# chnaged: added is not none
+    non_empty = sum(1 for p in partials if p)  # count batches that returned actual data
     print(f"[Agent 1] Pass 1 complete: {non_empty}/{total_batches} batches returned data")
 
     if non_empty == 0:

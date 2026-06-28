@@ -62,10 +62,12 @@ def markdown_to_docx(markdown: str) -> bytes:
 
         if line.startswith("# "):
             p = doc.add_heading(line[2:].strip(), level=1)
-            p.runs[0].font.name = "Times New Roman"
+            if p.runs:
+                p.runs[0].font.name = "Times New Roman"
         elif line.startswith("## "):
             p = doc.add_heading(line[3:].strip(), level=2)
-            p.runs[0].font.name = "Times New Roman"
+            if p.runs:
+                p.runs[0].font.name = "Times New Roman"
         elif line.startswith("### "):
             p = doc.add_heading(line[4:].strip(), level=3)
         elif line.strip() == "":
