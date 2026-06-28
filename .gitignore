@@ -1,0 +1,31 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Virtual environments
+venv/
+.venv/
+
+# VS Code settings
+.vscode/
+
+# Database files
+*.db
+
+# Output folders
+output/
+
+# Session backups
+session_backup/
+
+# Log files
+*.log
+
+# Windows/macOS files
+Thumbs.db
+.DS_Store

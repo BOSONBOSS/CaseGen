@@ -1,0 +1,86 @@
+{
+  "format_name": "IFQM Case Study",
+  "style_rules": "Write in third-person, past tense, objective, no promotional language. Use data to support all claims. Begin the Background section with a compelling hook: a dramatic quote, a surprising statistic, or a description of a crisis moment.",
+  "sections": [
+    {
+      "id": "background",
+      "title": "Company Background",
+      "word_count_min": 400,
+      "word_count_max": 1200,
+      "must_include": [
+        "Founding year and founders",
+        "Core business / product",
+        "Current scale (revenue, employees, locations)",
+        "Relevant history or milestones"
+      ]
+    },
+    {
+      "id": "industry_context",
+      "title": "Industry Context",
+      "word_count_min": 200,
+      "word_count_max": 800,
+      "must_include": [
+        "Market size or growth rate",
+        "Key competitors (at least 2-3 names)",
+        "Important trends (technology, regulation, consumer behaviour)"
+      ]
+    },
+    {
+      "id": "challenge",
+      "title": "The Challenge",
+      "word_count_min": 300,
+      "word_count_max": 800,
+      "must_include": [
+        "Specific problem description",
+        "Timeline of the problem's emergence",
+        "Quantitative evidence (e.g., sales drop, quality defects, turnover rate)",
+        "Impact on stakeholders (customers, employees, shareholders)"
+      ]
+    },
+    {
+      "id": "intervention",
+      "title": "Intervention / Approach",
+      "word_count_min": 500,
+      "word_count_max": 1200,
+      "must_include": [
+        "Actions taken (specific initiatives, process changes)",
+        "Decision maker(s) involved (named protagonist)",
+        "Resources deployed (budget, people, technology)",
+        "Timeline of implementation"
+      ]
+    },
+    {
+      "id": "results",
+      "title": "Results & Impact",
+      "word_count_min": 100,
+      "word_count_max": 600,
+      "must_include": [
+        "Quantitative outcomes (before vs. after metrics)",
+        "Qualitative outcomes (culture, reputation, employee feedback)",
+        "Unintended consequences (if any) - optional but recommended"
+      ]
+    },
+    {
+      "id": "learnings",
+      "title": "Learning Outcomes",
+      "word_count_min": 200,
+      "word_count_max": 500,
+      "must_include": [
+        "Key takeaways for managers/students",
+        "Transferable principles",
+        "Cautionary notes or limitations"
+      ]
+    },
+    {
+      "id": "discussion_questions",
+      "title": "Discussion Questions",
+      "word_count_min": 0,
+      "word_count_max": 0,
+      "must_include": [
+        "3-7 open ended questions",
+        "No single 'right answer'",
+        "Debatable, action‑oriented"
+      ]
+    }
+  ]
+}

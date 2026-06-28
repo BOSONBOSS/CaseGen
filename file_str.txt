@@ -1,0 +1,49 @@
+case-study-generator/
+│
+├── app.py                              # Main entry point (runs streamlit)
+├── requirements.txt                    # All dependencies
+├── .env                                # API keys (NEVER commit to git)
+├── .gitignore                          # Ignore .env, data/, __pycache__
+├── config.py                           # Load API keys and config
+│
+├── pages/                              # Streamlit multi-page wizard
+│   ├── 1_Upload_Documents.py
+│   ├── 2_Configure_Case_Study.py
+│   ├── 3_Select_Angle.py
+│   ├── 4_Generate_Case_Study.py
+│   └── 5_Edit_and_Export.py
+│
+├── pipeline/                           # Core business logic
+│   ├── __init__.py
+│   ├── database.py                     # SQLite case_history.db operations
+│   │
+│   ├── ingest/                         # Data ingestion layer
+│   │   ├── docling_parser.py           # PDF + OCR using IBM Docling
+│   │   ├── whisper_audio.py            # Audio transcription using OpenAI Whisper
+│   │   ├── spreadsheet_parser.py       # Excel/CSV using Pandas
+│   │   ├── web_parser.py               # URL extraction using BeautifulSoup
+│   │   └── text_chunker.py             # LangChain chunking (1k tokens, 200 overlap)
+│   │
+│   ├── agents/                         # 4-Agent Pipeline
+│   │   ├── agent_extractor.py          # Agent 1: Fact Extraction + Themes
+│   │   ├── agent_storyteller.py        # Agent 2: Narrative Writing
+│   │   ├── agent_analyst.py            # Agent 3: Exhibits + Discussion Questions
+│   │   └── agent_editor.py             # Agent 4: Editor + Fact-Checker + Citations
+│   │
+│   ├── models/                         # Pydantic schemas
+│   │   └── schemas.py                  # FactSheet model with key_quotes, themes
+│   │
+│   └── output/                         # Export layer
+│       ├── word_exporter.py            # python-docx (Word export)
+│       └── pdf_exporter.py             # WeasyPrint (PDF export)
+│
+├── templates/                          # IFQM templates
+│   ├── case_template.json              # Section rules, word limits
+│   └── few_shot_examples.json          # 2 example paragraphs per section
+│
+├── uploads/                            # Temporary storage for uploaded files
+│   └── (audio, PDF, Excel files)       # Cleaned up after processing
+│
+└── session_backup/                     # Session persistence (survives browser refresh)
+    ├── factsheet_[timestamp].json      # FactSheet backup
+    └── case_[timestamp].md             # Final Markdown backup
