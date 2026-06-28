@@ -1,14 +1,30 @@
 import os
+import sys
 from dotenv import load_dotenv
+
+# Ensure stdout/stderr can emit non-ASCII (₹, em-dashes, accented names) on
+# Windows consoles that default to cp1252 — otherwise agent prints crash the run.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # Load the .env file
 load_dotenv()
 
+# LLM provider: "gemini" (default) or "openrouter"
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini").lower()
+
 # Get the API key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
 
-if not GEMINI_API_KEY:
+if LLM_PROVIDER == "gemini" and not GEMINI_API_KEY:
     raise ValueError("CRITICAL ERROR: GEMINI_API_KEY is missing from the .env file!")
+if LLM_PROVIDER == "openrouter" and not OPENROUTER_API_KEY:
+    raise ValueError("CRITICAL ERROR: OPENROUTER_API_KEY is missing from the .env file!")
 
 #Metadata (Title & Abstract) 
 CASE_METADATA = {

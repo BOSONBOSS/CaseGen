@@ -8,22 +8,50 @@ import re
 import time
 from typing import Any, Callable, Optional, Type, TypeVar
 
-from google import genai
-from google.genai import types
+import requests
 from pydantic import BaseModel, ValidationError
 
-from config import GEMINI_API_KEY, GEMINI_MODEL, LLM_TEMPERATURE, MAX_OUTPUT_TOKENS
+from config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    LLM_TEMPERATURE,
+    MAX_OUTPUT_TOKENS,
+    LLM_PROVIDER,
+    OPENROUTER_API_KEY,
+    OPENROUTER_MODEL,
+)
 
 T = TypeVar("T", bound=BaseModel)
 
-_client: Optional[genai.Client] = None
+_client = None
+
+_OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
-def get_client() -> genai.Client:
+def get_client():
+    """Lazily build the Gemini client (only used when LLM_PROVIDER == 'gemini')."""
     global _client
     if _client is None:
+        from google import genai
         _client = genai.Client(api_key=GEMINI_API_KEY)
     return _client
+
+
+def _openrouter_generate(prompt: str, temperature: float, max_output_tokens: int) -> str:
+    resp = requests.post(
+        _OPENROUTER_URL,
+        headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
+        json={
+            "model": OPENROUTER_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_output_tokens,
+        },
+        timeout=120,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return (data["choices"][0]["message"]["content"] or "").strip()
 
 
 def extract_json(raw: str) -> dict:
@@ -58,23 +86,27 @@ def generate_text(
     max_retries: int = 3,
 ) -> str:
     """Call Gemini with exponential backoff retry."""
-    client = get_client()
     last_error: Optional[Exception] = None
 
     for attempt in range(max_retries):
         try:
-            response = client.models.generate_content(
-                model=GEMINI_MODEL,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=temperature,
-                    max_output_tokens=max_output_tokens,
-                ),
-            )
-            text = response.text
+            if LLM_PROVIDER == "openrouter":
+                text = _openrouter_generate(prompt, temperature, max_output_tokens)
+            else:
+                from google.genai import types
+                client = get_client()
+                response = client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=temperature,
+                        max_output_tokens=max_output_tokens,
+                    ),
+                )
+                text = response.text
             if text and text.strip():
                 return text.strip()
-            last_error = ValueError("Empty response from Gemini")
+            last_error = ValueError("Empty response from LLM")
         except Exception as e:
             last_error = e
             wait = 2 ** attempt
