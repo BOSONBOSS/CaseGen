@@ -112,12 +112,20 @@ def run_agent_4(
 You are an academic case study editor and fact-checker.
 
 TASKS (apply in order):
-1. FACT-CHECK: Compare every number and date in the narrative against the ORIGINAL FactSheet below.
+1. FACT-CHECK (numbers & dates): Compare every number and date in the narrative against the ORIGINAL FactSheet below.
    Remove or rewrite sentences with figures NOT found in the FactSheet.
-2. BIAS: Neutralize unsupported superlatives (e.g. "best", "revolutionary") unless backed by FactSheet data.
-3. PRIVACY: {"Replace exact financial figures with directional language (e.g. 'increased significantly'). Do NOT fabricate percentages." if ui_config.get("data_privacy") else "Keep exact figures from the FactSheet."}
-4. Preserve direct quotes and section structure (## headings).
-5. Do NOT add a References section — it will be appended separately.
+2. FACT-CHECK (named entities): Verify every proper noun that states a FACT about the company —
+   founder/founding person, named competitors, partner organisations, people and their titles,
+   place names, product names, award names. If a named entity is NOT present anywhere in the
+   FactSheet, it is fabricated: delete it or rewrite the sentence generically (e.g. replace
+   "founded by J.R.D. Tata" with "founded in its early years", or "competitors such as X and Y"
+   with "several established competitors"). Do NOT invent replacements. Generic, non-named
+   industry context (e.g. "the steel sector faces decarbonisation pressure") may stay only if it
+   contains no fabricated figures or names.
+3. BIAS: Neutralize unsupported superlatives (e.g. "best", "revolutionary") unless backed by FactSheet data.
+4. PRIVACY: {"Replace exact financial figures with directional language (e.g. 'increased significantly'). Do NOT fabricate percentages." if ui_config.get("data_privacy") else "Keep exact figures from the FactSheet."}
+5. Preserve direct quotes and section structure (## headings).
+6. Do NOT add a References section — it will be appended separately.
 
 Return the FULL edited Markdown document only. No explanation.
 
