@@ -1,15 +1,25 @@
 import os
 from typing import Optional
 
-import whisper
-
 from config import WHISPER_MODEL
 
 _model_cache: dict = {}
 
 
 def get_whisper_model(model_size: Optional[str] = None):
-    """Load Whisper model once per size (singleton cache)."""
+    """Load Whisper model once per size (singleton cache).
+
+    Whisper (and its heavy torch dependency) is imported lazily here so that
+    PDF / Excel / URL uploads work even when audio support isn't installed.
+    """
+    try:
+        import whisper
+    except ImportError as e:
+        raise RuntimeError(
+            "Audio transcription needs the 'openai-whisper' package (and torch), "
+            "which isn't installed. Install it, or use PDF/Excel/URL sources instead."
+        ) from e
+
     size = model_size or WHISPER_MODEL
     if size not in _model_cache:
         print(f"[Whisper] Loading model '{size}'...")

@@ -186,14 +186,19 @@ with col_next:
         # 2. Chunk the Master Transcript in the background
         if _transcript and total_char_count(_transcript) >= 500:
             with st.spinner("Preparing your documents for analysis…"):
-                from pipeline.ingest.text_chunker import chunk_master_transcript
-                chunks = chunk_master_transcript(
-                    _transcript,
-                    chunk_size=CHUNK_SIZE,
-                    chunk_overlap=CHUNK_OVERLAP,
-                )
-                st.session_state["chunks"] = chunks
-                time.sleep(0.8)
+                try:
+                    from pipeline.ingest.text_chunker import chunk_master_transcript
+                    chunks = chunk_master_transcript(
+                        _transcript,
+                        chunk_size=CHUNK_SIZE,
+                        chunk_overlap=CHUNK_OVERLAP,
+                    )
+                    st.session_state["chunks"] = chunks
+                    time.sleep(0.8)
+                except Exception as e:
+                    st.error(f"Chunking failed: {type(e).__name__}: {e}")
+                    st.exception(e)
+                    st.stop()
         else:
             st.session_state["chunks"] = []
 

@@ -84,7 +84,8 @@ if "fact_sheet" not in st.session_state:
     except Exception as e:
         progress_bar.empty()
         progress_text.empty()
-        st.error(f"Agent 1 failed: {str(e)}")
+        st.error(f"Agent 1 failed: {type(e).__name__}: {e}")
+        st.exception(e)
         st.stop()
 
 fact_sheet = st.session_state["fact_sheet"]

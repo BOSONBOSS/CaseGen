@@ -28,13 +28,16 @@ st.markdown("""
 st.sidebar.markdown("**Step 5 of 5** — Edit & Export")
 st.markdown('<div class="page-title">Review, Edit & Export</div>', unsafe_allow_html=True)
 
-required = ["narrative", "fact_sheet", "filtered_fact_sheet", "ui_config"]
-missing = [k for k in required if k not in st.session_state]
-if missing:
-    st.error(f"Missing: {', '.join(missing)}. Complete generation first.")
-    if st.button("Go to Generate"):
-        st.switch_page("pages/4_Generate_Case_Study.py")
-    st.stop()
+if not st.session_state.get("final_markdown"):
+    required = ["narrative", "fact_sheet", "filtered_fact_sheet", "ui_config"]
+    missing = [k for k in required if k not in st.session_state]
+    if missing:
+        st.error(f"Missing: {', '.join(missing)}. Complete generation first.")
+        if st.button("Go to Generate"):
+            st.switch_page("pages/4_Generate_Case_Study.py")
+        st.stop()
+
+can_regenerate = all(k in st.session_state for k in ["narrative", "filtered_fact_sheet", "ui_config"])
 
 SECTIONS = [
     ("background", "Company Background"),
@@ -46,6 +49,9 @@ SECTIONS = [
 ]
 
 if "final_markdown" not in st.session_state or not st.session_state.get("final_markdown"):
+    if not can_regenerate:
+        st.error("Cannot run Agent 4: session state incomplete. Load a document from Page 1 first.")
+        st.stop()
     with st.spinner("Agent 4 is fact-checking and formatting the final document…"):
         try:
             final_md = run_agent_4(
@@ -63,24 +69,26 @@ if "final_markdown" not in st.session_state or not st.session_state.get("final_m
             path = save_case_markdown(final_md, company)
             save_case(company, theme, path)
         except Exception as e:
-            st.error(f"Agent 4 failed: {e}")
+            st.error(f"Agent 4 failed: {type(e).__name__}: {e}")
+            st.exception(e)
             st.stop()
 
-st.markdown('<div class="section-label">Regenerate Sections</div>', unsafe_allow_html=True)
-reg_cols = st.columns(3)
-for i, (sid, label) in enumerate(SECTIONS):
-    with reg_cols[i % 3]:
-        if st.button(f"↻ {label}", key=f"regen_{sid}"):
-            with st.spinner(f"Regenerating {label}..."):
-                updated = regenerate_section(
-                    sid,
-                    st.session_state["filtered_fact_sheet"],
-                    st.session_state["ui_config"],
-                    st.session_state["narrative"],
-                )
-                st.session_state["narrative"] = updated
-                st.session_state.pop("final_markdown", None)
-            st.rerun()
+if can_regenerate:
+    st.markdown('<div class="section-label">Regenerate Sections</div>', unsafe_allow_html=True)
+    reg_cols = st.columns(3)
+    for i, (sid, label) in enumerate(SECTIONS):
+        with reg_cols[i % 3]:
+            if st.button(f"↻ {label}", key=f"regen_{sid}"):
+                with st.spinner(f"Regenerating {label}..."):
+                    updated = regenerate_section(
+                        sid,
+                        st.session_state["filtered_fact_sheet"],
+                        st.session_state["ui_config"],
+                        st.session_state["narrative"],
+                    )
+                    st.session_state["narrative"] = updated
+                    st.session_state.pop("final_markdown", None)
+                st.rerun()
 
 edited = st.text_area(
     "Final case study (editable)",

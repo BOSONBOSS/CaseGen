@@ -17,6 +17,11 @@ else:
             st.caption(f"Saved: {case['markdown_path']}")
             if st.button("Load into editor", key=f"load_{case['id']}"):
                 if case["markdown_path"]:
-                    md = load_case_markdown(case["markdown_path"])
-                    st.session_state["final_markdown"] = md
-                    st.switch_page("pages/5_Edit_Export.py")
+                    try:
+                        md = load_case_markdown(case["markdown_path"])
+                        st.session_state["final_markdown"] = md
+                        st.switch_page("pages/5_Edit_Export.py")
+                    except FileNotFoundError:
+                        st.error(f"File not found on disk: {case['markdown_path']}")
+                    except Exception as e:
+                        st.error(f"Could not load case: {type(e).__name__}: {e}")

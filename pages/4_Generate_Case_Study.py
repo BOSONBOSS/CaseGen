@@ -65,7 +65,8 @@ if "narrative" not in st.session_state or not st.session_state.get("narrative"):
         bar3.empty()
         st.rerun()
     except Exception as e:
-        st.error(f"Generation failed: {e}")
+        st.error(f"Generation failed: {type(e).__name__}: {e}")
+        st.exception(e)  # full traceback so the real cause is visible
         st.stop()
 
 narrative = st.session_state["narrative"]
