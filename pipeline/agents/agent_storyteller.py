@@ -50,6 +50,10 @@ def _narrative_prompt(fact_sheet_json: str, ui_config: dict, case_template: dict
     return f"""
 You are a case study storyteller. Write flowing prose for ALL required sections.
 Use ONLY facts from the FactSheet. Do NOT invent numbers or facts.
+Do NOT invent named entities — no founder names, competitor names, partner organisations,
+people, products, or awards unless they appear in the FactSheet. If a section asks for something
+absent from the FactSheet (e.g. competitors, founder), describe it generically ("established
+competitors", "in its early years") rather than fabricating a name.
 Write in third-person past tense. Weave in key_quotes where appropriate.
 Respect word limits from the template. Apply tone and audience from UI config.
 

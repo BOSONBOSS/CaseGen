@@ -8,7 +8,7 @@
       "word_count_min": 400,
       "word_count_max": 1200,
       "must_include": [
-        "Founding year and founders",
+        "Founding year and founders ONLY if present in the FactSheet; otherwise omit entirely — never invent a founder name or year",
         "Core business / product",
         "Current scale (revenue, employees, locations)",
         "Relevant history or milestones"
@@ -20,9 +20,9 @@
       "word_count_min": 200,
       "word_count_max": 800,
       "must_include": [
-        "Market size or growth rate",
-        "Key competitors (at least 2-3 names)",
-        "Important trends (technology, regulation, consumer behaviour)"
+        "Market size or growth rate (only if supported by the FactSheet; otherwise describe qualitatively)",
+        "Name specific competitors ONLY if they appear in the FactSheet; otherwise refer to 'established competitors' generically — never invent company names",
+        "Important trends (technology, regulation, consumer behaviour) described generically without fabricated names or figures"
       ]
     },
     {
