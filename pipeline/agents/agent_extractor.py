@@ -105,17 +105,16 @@ Required structure — same fields as before including tagged_facts array.
 def _process_batch(chunks: list[str], batch_num: int) -> dict:
     combined = "\n\n".join(chunks)
     prompt = _EXTRACTION_PROMPT.format(text=combined)
+    result = None #changed: added result = None
     try:
         result = generate_json(prompt)
         if result:
             company = result.get("company_name") or "—"
             themes = result.get("themes") or []
             print(f"[Agent 1] Batch {batch_num} OK — company: {company!r}, themes: {themes}")
-        return result or {}
     except Exception as e:
         print(f"[Agent 1] Batch {batch_num} error: {e}")
-        return {}
-
+    return result or {}
 
 def _synthesise(partials: list[dict]) -> dict:
     valid = [p for p in partials if p]
@@ -267,8 +266,7 @@ def run_agent_1(
         partials.append(result)
         if on_progress:
             on_progress(batch_num, total_batches)
-
-    non_empty = sum(1 for p in partials if p)
+    non_empty = sum(1 for p in partials if p is not None)# chnaged: added is not none
     print(f"[Agent 1] Pass 1 complete: {non_empty}/{total_batches} batches returned data")
 
     if non_empty == 0:
