@@ -125,7 +125,7 @@ def run_agent_4(
     Returns final_markdown string.
     """
     company = filtered_fact_sheet.company_name or fact_sheet.company_name
-    theme = ui_config.get("selected_theme") or ui_config.get("theme") or "Case Study"
+    theme = ui_config.get("selected_theme") or "Case Study"
 
     merged = _merge_document(narrative, exhibits, discussion_questions, company, theme, filtered_fact_sheet)
 

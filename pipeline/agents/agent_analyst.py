@@ -83,7 +83,7 @@ def run_agent_3(fact_sheet, ui_config: dict) -> dict:
     Returns {"exhibits": str, "discussion_questions": list[str]}.
     """
     audience = ui_config.get("audience", "")
-    theme = ui_config.get("theme") or ui_config.get("selected_theme") or "General Business Analysis"
+    theme = ui_config.get("selected_theme") or "General Business Analysis"
     num_q = _question_count(audience)
 
     prompt = _ANALYST_PROMPT.format(

@@ -40,7 +40,7 @@ UI config:
 - Discipline: {ui_config.get("discipline", "")}
 - Tone: {ui_config.get("tone", "")}
 - Audience: {ui_config.get("audience", "")}
-- Theme: {ui_config.get("theme") or ui_config.get("selected_theme", "")}
+- Theme: {ui_config.get("selected_theme", "General Business Analysis")}
 - Custom instructions: {ui_config.get("custom_instructions", "")}
 """
 

@@ -138,7 +138,23 @@ for row in [themes[i:i+3] for i in range(0, len(themes), 3)]:
             if st.button(theme, key=f"theme_{theme}", type="primary" if selected_theme == theme else "secondary", use_container_width=True):
                 selected_theme = theme
                 st.session_state["selected_theme"] = theme
+                st.session_state.pop("custom_theme_input", None)  # clear custom override
                 st.rerun()
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown('<div class="section-label">Or type a custom theme</div>', unsafe_allow_html=True)
+custom_theme = st.text_input(
+    "Custom theme",
+    value=st.session_state.get("custom_theme_input", ""),
+    placeholder="e.g., Sustainability, Digital Transformation, Lean Manufacturing…",
+    help="This overrides the buttons above. Leave blank to use the selected button.",
+    label_visibility="collapsed",
+    key="custom_theme_input",
+)
+
+# Custom theme overrides button selection when filled
+if custom_theme and custom_theme.strip():
+    selected_theme = custom_theme.strip()
 
 st.session_state["selected_theme"] = selected_theme
 st.info(f"Selected angle: **{selected_theme}**")

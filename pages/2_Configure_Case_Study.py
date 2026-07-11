@@ -128,17 +128,12 @@ with st.container(border=True):
             help="Controls how Agent 2 (Storyteller) frames the narrative."
         )
 
-        theme = st.text_input(
-            "Specific Theme (Optional)",
-            placeholder="e.g., Sustainability, Digital Transformation",
-            help="If left blank, Agent 1 will discover themes for you to pick from."
-        )
 
         custom_instructions = st.text_area(
             "Custom Instructions (Optional)",
             placeholder='e.g., "Focus heavily on CEO name ABC\'s leadership style."',
-            height=120,
-            help="Extra instructions passed directly to Agent 2 (Storyteller)."
+            height=200,
+            help="Extra instructions passed directly to Agent 2 (Storyteller).",
         )
 
         data_privacy = st.toggle(
@@ -178,9 +173,9 @@ with col_next:
             "audience":            audience,
             "citation":            citation,
             "tone":                tone,
-            "theme":               theme,
             "custom_instructions": custom_instructions,
             "data_privacy":        data_privacy,
+            # selected_theme is set on Page 3 after Agent 1 discovers themes
         }
 
         # 2. Chunk the Master Transcript in the background
