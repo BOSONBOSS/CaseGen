@@ -42,6 +42,12 @@ def _markdown_to_html(markdown: str) -> str:
             html_parts.append(f"<h2>{line[3:]}</h2>")
         elif line.startswith("### "):
             html_parts.append(f"<h3>{line[4:]}</h3>")
+        elif line.strip().startswith("> "):
+            raw = line.strip()[2:].strip()
+            # Remove markdown italic markers
+            raw = re.sub(r"\*(.+?)\*", r"\1", raw)
+            raw = re.sub(r"_(.+?)_", r"\1", raw)
+            html_parts.append(f"<blockquote><em>{raw}</em></blockquote>")
         elif line.strip():
             text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
             html_parts.append(f"<p>{text}</p>")
@@ -57,6 +63,7 @@ def _markdown_to_html(markdown: str) -> str:
 body {{ font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; }}
 h1 {{ font-size: 18pt; }} h2 {{ font-size: 14pt; margin-top: 18px; }} h3 {{ font-size: 12pt; }}
 table {{ font-size: 11pt; }}
+blockquote {{ border-left: 3px solid #555; margin: 12px 0 12px 20px; padding: 4px 12px; font-style: italic; color: #333; }}
 </style></head><body>{body}</body></html>"""
 
 

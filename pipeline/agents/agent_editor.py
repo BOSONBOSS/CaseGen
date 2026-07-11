@@ -22,8 +22,17 @@ def _merge_document(
     discussion_questions: list,
     company_name: str,
     selected_theme: str,
+    fact_sheet: FactSheet,
 ) -> str:
     parts = [f"# {company_name}: {selected_theme}\n"]
+
+    if fact_sheet.key_quotes:
+        first_quote = fact_sheet.key_quotes[0]
+        # Depending on Pydantic version and how it's structured, it could be a dict or object
+        q_text = first_quote.quote if hasattr(first_quote, "quote") else first_quote.get("quote", "")
+        q_speaker = first_quote.speaker if hasattr(first_quote, "speaker") else first_quote.get("speaker", "")
+        if q_text:
+            parts.append(f"> \"{q_text}\" — *{q_speaker}*\n")
 
     for section_id, title in _SECTION_ORDER:
         body = narrative.get(section_id, "").strip()
@@ -75,14 +84,26 @@ def _build_references(
 
     for i, source in enumerate(sources, 1):
         fmt = (citation_format or "APA (7th Edition)").lower()
-        if "ifqm" in fmt:
-            lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
-        elif "mla" in fmt:
-            lines.append(f"{i}. {name}. *{source}*. {year}.")
-        elif "chicago" in fmt:
-            lines.append(f"{i}. {name}, *{source}* ({year}).")
+        # Detect if the source is a URL
+        is_url = source.startswith("http://") or source.startswith("https://")
+        if is_url:
+            if "ifqm" in fmt:
+                lines.append(f"{i}. {name} ({year}). Retrieved from {source}")
+            elif "mla" in fmt:
+                lines.append(f"{i}. {name}. *Web*. {year}. {source}")
+            elif "chicago" in fmt:
+                lines.append(f"{i}. {name}. {year}. {source}.")
+            else:  # APA default
+                lines.append(f"{i}. {name}. ({year}). Retrieved from {source}")
         else:
-            lines.append(f"{i}. {name}. ({year}). *{source}*.")
+            if "ifqm" in fmt:
+                lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
+            elif "mla" in fmt:
+                lines.append(f"{i}. {name}. *{source}*. {year}.")
+            elif "chicago" in fmt:
+                lines.append(f"{i}. {name}, *{source}* ({year}).")
+            else:
+                lines.append(f"{i}. {name}. ({year}). *{source}*.")
 
     if not sources:
         lines.append(f"1. {name}. ({year}). Source documents provided by user.")
@@ -106,7 +127,7 @@ def run_agent_4(
     company = filtered_fact_sheet.company_name or fact_sheet.company_name
     theme = ui_config.get("selected_theme") or ui_config.get("theme") or "Case Study"
 
-    merged = _merge_document(narrative, exhibits, discussion_questions, company, theme)
+    merged = _merge_document(narrative, exhibits, discussion_questions, company, theme, filtered_fact_sheet)
 
     prompt = f"""
 You are an academic case study editor and fact-checker.

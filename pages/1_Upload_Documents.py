@@ -59,7 +59,7 @@ with st.sidebar.expander("Processing Options", expanded=False):
     )
 
 st.markdown('<div class="page-title">Upload Source Documents</div>', unsafe_allow_html=True)
-st.markdown('<div class="page-desc">Add every file you want the AI to read. Supported formats: PDF, Excel, CSV, audio files, and web articles.</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-desc">Add every file you want the AI to read. Supported formats: PDF, Excel, CSV, audio files and web article URL.</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns(2, gap="large")
 
