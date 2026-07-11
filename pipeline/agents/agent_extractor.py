@@ -14,17 +14,25 @@ from pipeline.models.schemas import FactSheet
 _EXTRACTION_PROMPT = """
 You are a business document fact extractor for a case study generation tool.
 Read the text below (extracted from an annual report or corporate document) and
-extract EVERY hard fact you can find.
+extract EVERY hard fact you can find. Be exhaustive — it is better to over-extract
+than to miss a fact. Each field below MUST be populated if the text supports it.
 
 EXTRACTION RULES:
-1. Company name: Look in the title, header, "About Us", Chairman's message.
-2. Financial figures: Revenue, profit, EBITDA, ROCE. Look for ₹, $, crore, million, %.
-3. Dates: Founding year, reporting year (FY2025-26), milestone years.
-4. Key people: Chairman, CEO, MD, CFO with full names AND titles.
-5. Quotes: Text inside "..." from leadership messages. Include speaker name.
-6. Challenges, Interventions, Outcomes: specific and factual.
-7. Themes: Up to 5 STRATEGIC topics (e.g. "Decarbonisation", "Supply Chain Resilience").
-8. tagged_facts: For each important fact, add theme_tags from the themes you identify.
+1. company_name: Look in title, header, "About Us", Chairman's message.
+2. revenue: Look ONLY for TOTAL company revenue, turnover, or total sales. Do NOT extract operating income, profit, or revenue for a single business division/segment. Include currency symbol, unit (crore/million/billion/%), and year. If multiple figures exist, put the total company figure here.
+3. raw_facts: List EVERY numerical or quantitative fact you can find — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. Include the context for each number (e.g. "200 fuel-cell electric trucks operational as of December 2025"). Do NOT skip any number.
+4. timeline_events: List EVERY dated event, milestone, product launch, policy change, or achievement mentioned. Each entry must have a year (even approximate like "2023") and a clear description.
+5. challenges: List every problem, obstacle, difficulty, or risk mentioned — operational, financial, regulatory, competitive, or strategic.
+6. interventions: List every initiative, programme, investment, technology, process, or strategic change the company took in response to challenges.
+7. outcomes: List every measurable or stated result, achievement, improvement, or outcome — including production milestones, market performance, and financial results.
+8. key_quotes: Extract ALL direct quotes (text inside quotation marks) from leadership, employees, or official statements. Include the full quote text and speaker name with title.
+9. key_people: All named leaders/executives with their exact title.
+10. themes: Up to 5 STRATEGIC topics reflected in this text.
+11. tagged_facts: For EVERY fact in raw_facts, challenges, interventions, and outcomes, create a tagged_facts entry linking that fact to a theme.
+12. strategic_initiatives: List EVERY named programme, brand launch, technology bet, or major strategic project (e.g. "Woven City", "ENGINE ReBORN", "bZ3X BEV launch"). Include its name, a rich description with all available details, and approximate year.
+13. key_partnerships: List EVERY named external partner, joint venture, or strategic alliance. Include partner name, the domain of the partnership, and a brief description.
+
+CRITICAL: Do NOT leave timeline_events, challenges, interventions, outcomes, key_quotes, raw_facts, strategic_initiatives, or key_partnerships as empty arrays if there is ANY relevant content in the text. These are the most important fields.
 
 If a value is unknown, use null for scalar fields and [] for list fields.
 Do NOT omit any keys.
@@ -36,7 +44,7 @@ OUTPUT ONLY VALID JSON — no prose, no markdown fences.
   "founding_year": "4-digit year string or null",
   "industry": "industry sector or null",
   "headquarters": "City, Country or null",
-  "revenue": "revenue with currency and year or null",
+  "revenue": "revenue with currency, unit, and year or null",
   "key_people": ["Name (Title)"],
   "timeline_events": [
     {{
@@ -46,24 +54,39 @@ OUTPUT ONLY VALID JSON — no prose, no markdown fences.
       "theme_tags": []
     }}
   ],
-  "challenges": ["challenge 1"],
-  "interventions": ["initiative 1"],
-  "outcomes": ["result 1"],
+  "challenges": ["specific challenge description"],
+  "interventions": ["specific initiative or action taken"],
+  "outcomes": ["specific measurable or stated result"],
   "key_quotes": [
     {{
-      "speaker": "Name",
-      "quote": "text",
+      "speaker": "Name (Title)",
+      "quote": "exact text of the quote",
       "source": null,
       "theme_tags": []
     }}
   ],
   "themes": ["Theme 1", "Theme 2"],
-  "raw_facts": ["other hard facts"],
+  "raw_facts": ["every numerical or quantitative fact with context"],
   "tagged_facts": [
     {{
       "fact": "specific fact",
       "theme_tags": ["Theme 1"],
       "source": null
+    }}
+  ],
+  "strategic_initiatives": [
+    {{
+      "name": "Programme Name",
+      "description": "detailed description of what this initiative is and what it aims to achieve",
+      "year": "year or null",
+      "theme_tags": []
+    }}
+  ],
+  "key_partnerships": [
+    {{
+      "partner": "Partner Organisation Name",
+      "area": "domain (e.g. hydrogen, batteries, supply chain)",
+      "description": "brief explanation of the partnership"
     }}
   ]
 }}
@@ -82,6 +105,12 @@ Rules:
 - Deduplicate lists semantically; keep most specific wording.
 - themes: exactly 3-5 distinct STRATEGIC themes for the user to pick from.
 - tagged_facts: merge and tag facts with relevant theme_tags.
+- CRITICAL — do NOT discard or empty any of these fields during deduplication:
+  timeline_events, challenges, interventions, outcomes, key_quotes, raw_facts,
+  strategic_initiatives, key_partnerships.
+  If the same event appears multiple times with slightly different wording, keep
+  the most detailed version. Never output an empty list for these fields if any
+  partial had data in them.
 
 OUTPUT ONLY VALID JSON with the same structure as input fragments.
 
@@ -152,6 +181,8 @@ def _heuristic_merge(partials: list[dict]) -> dict:
         "themes": [],
         "raw_facts": [],
         "tagged_facts": [],
+        "strategic_initiatives": [],
+        "key_partnerships": [],
     }
 
     for p in partials:
@@ -161,7 +192,7 @@ def _heuristic_merge(partials: list[dict]) -> dict:
             if not merged[field] and p.get(field):
                 merged[field] = p[field]
 
-        for field in ("key_people", "challenges", "interventions", "outcomes", "raw_facts", "themes"):
+        for field in ("key_people", "challenges", "interventions", "outcomes", "raw_facts", "themes", "strategic_initiatives", "key_partnerships"):
             seen = {str(x) for x in merged[field]}
             for item in p.get(field, []):
                 if str(item) not in seen:
@@ -198,6 +229,7 @@ def _normalise_for_validation(merged: dict) -> dict:
     list_fields = (
         "key_people", "timeline_events", "challenges", "interventions",
         "outcomes", "key_quotes", "themes", "raw_facts", "tagged_facts",
+        "strategic_initiatives", "key_partnerships",
     )
     for field in list_fields:
         if not isinstance(merged.get(field), list):
@@ -214,6 +246,14 @@ def _normalise_for_validation(merged: dict) -> dict:
     merged["tagged_facts"] = [
         item if isinstance(item, dict) else {"fact": str(item), "theme_tags": [], "source": None}
         for item in merged.get("tagged_facts", [])
+    ]
+    merged["strategic_initiatives"] = [
+        item if isinstance(item, dict) else {"name": str(item), "description": "", "year": None, "theme_tags": []}
+        for item in merged.get("strategic_initiatives", [])
+    ]
+    merged["key_partnerships"] = [
+        item if isinstance(item, dict) else {"partner": str(item), "area": "", "description": None}
+        for item in merged.get("key_partnerships", [])
     ]
     return merged
 

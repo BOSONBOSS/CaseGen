@@ -78,8 +78,24 @@ def _section_prompt(section_id: str, fact_sheet_json: str, ui_config: dict, case
     ctx = _build_system_context(ui_config, case_template, few_shot)
     section = next((s for s in case_template.get("sections", []) if s.get("id") == section_id), {})
     return f"""
-You are a case study storyteller. Regenerate ONLY the "{section_id}" section ({section.get("title", section_id)}).
-Use ONLY facts from the FactSheet. Do NOT invent numbers.
+You are a professional case study author. Generate ONLY the "{section_id}" section ({section.get("title", section_id)}).
+
+CRITICAL DATA RULE: You MUST aggressively weave numerical figures, percentages, dates, and quantitative metrics from the FactSheet into your prose. Do NOT write purely qualitative prose if numbers are available in raw_facts, outcomes, or tagged_facts.
+
+CRITICAL ANTI-HALLUCINATION RULES:
+1. Do NOT invent operational details (e.g., "brainstorming sessions", "workshops", "restructured workforce", "marketing campaigns", "budget allocated") unless explicitly stated in the FactSheet.
+2. Do NOT invent narrative drama or emotions (e.g., "struggling", "under pressure", "lagging", "fraught with challenges") unless those exact words appear in the FactSheet. If the FactSheet describes a proactive, confident strategy, present it as confident and deliberate — not reactive.
+3. Do NOT draw unsupported cautionary conclusions. Stick strictly to the tone expressed in the source data.
+4. Use ONLY named entities (people, products, partners, awards, programmes) that explicitly appear in the FactSheet. Describe anything absent generically.
+
+TONE AND VOICE RULES:
+5. Use ACTIVE VOICE throughout. Write "Toyota launched the bZ3X in China" not "The bZ3X was launched in China by Toyota".
+6. Match the STRATEGIC CONFIDENCE of the source document. Position the company as executing a deliberate, principled strategy — not reacting to a crisis.
+7. If the FactSheet contains unique terminology from the source document (e.g., "multi-pathway strategy", "monozukuri", "genba", "Mobility for All", "region-centered management"), USE THOSE EXACT TERMS — do not paraphrase them into generic equivalents.
+8. Use PRECISE powertrain terminology: use BEV, PHEV, HEV, FCEV specifically — never the generic term "EV" unless the source uses it.
+
+IMPORTANT: strategic_initiatives in the FactSheet contains named programmes (e.g. Woven City, ENGINE ReBORN). You MUST write substantively about these in the intervention/results/background sections. key_partnerships contains named external partners — mention them by name.
+
 Word limits: min {section.get("word_count_min", 200)}, max {section.get("word_count_max", 1200)}.
 
 {ctx}
@@ -92,16 +108,23 @@ FACT SHEET:
 
 
 def run_agent_2(fact_sheet, ui_config: dict) -> dict:
-    """Generate all narrative sections. Returns dict section_id -> markdown."""
+    """Generate all narrative sections sequentially. Returns dict section_id -> markdown."""
     case_template, few_shot = _load_templates()
-    prompt = _narrative_prompt(
-        fact_sheet.model_dump_json(indent=2),
-        ui_config,
-        case_template,
-        few_shot,
-    )
-    result = generate_json(prompt)
-    narrative = {sid: result.get(sid, "") for sid in _SECTION_IDS}
+    narrative = {}
+    fact_sheet_json = fact_sheet.model_dump_json(indent=2)
+    
+    for section_id in _SECTION_IDS:
+        print(f"[Agent 2] Generating section: {section_id}...")
+        prompt = _section_prompt(
+            section_id,
+            fact_sheet_json,
+            ui_config,
+            case_template,
+            few_shot,
+        )
+        result = generate_json(prompt)
+        narrative[section_id] = result.get(section_id, "")
+        
     return narrative
 
 

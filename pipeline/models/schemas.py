@@ -2,6 +2,19 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
+class StrategicInitiative(BaseModel):
+    name: str
+    description: str
+    year: Optional[str] = None
+    theme_tags: List[str] = Field(default_factory=list)
+
+
+class Partnership(BaseModel):
+    partner: str
+    area: str
+    description: Optional[str] = None
+
+
 class TimelineEvent(BaseModel):
     year: Optional[str] = None
     event: str
@@ -39,4 +52,12 @@ class FactSheet(BaseModel):
     tagged_facts: List[TaggedFact] = Field(
         default_factory=list,
         description="Facts with theme tags for filtering (e.g. Supply Chain, HR Culture)",
+    )
+    strategic_initiatives: List[StrategicInitiative] = Field(
+        default_factory=list,
+        description="Named programmes, brand launches, technology bets, or major strategic projects",
+    )
+    key_partnerships: List[Partnership] = Field(
+        default_factory=list,
+        description="Named external partners, joint ventures, or collaborations",
     )

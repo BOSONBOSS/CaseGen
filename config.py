@@ -40,11 +40,15 @@ CASE_METADATA = {
 # Exhibits Configuration
 EXHIBITS_CONFIG = {
     "required": False,
-    "min_count": 2, # aim for at least 2 if data available
-    "max_count": 6,
-    "types": ["financial_table", "market_share_chart", "timeline_diagram", "process_flow"],
+    "min_count": 4,   # aim for at least 4 if data available
+    "max_count": 12,
+    "types": [
+        "key_company_facts", "key_metrics_table", "key_people", "strategic_initiatives",
+        "key_partnerships", "timeline", "key_challenges", "key_interventions",
+        "key_outcomes", "key_quotes", "sustainability_targets", "technology_comparison",
+    ],
     "source_restriction": "Use ONLY data from the Fact Sheet. Do not invent numbers.",
-    "skip_if_no_data": True,# if Fact Sheet (by agent 1) lacks numeric data, skip exhibits entirely
+    "skip_if_no_data": False, # relaxed to allow qualitative exhibits even if no numbers exist
 }
 
 #File Paths

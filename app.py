@@ -194,13 +194,13 @@ body { font-family: 'Inter', sans-serif; background: transparent; color: #0F172A
       <div class="eyebrow">CaseGen</div>
       <div class="headline">From raw company data<br>to a publishable case study.</div>
       <div class="sub">
-        Upload annual reports, interview recordings, or financial spreadsheets.
-        A 4-agent AI pipeline extracts the facts, builds the narrative, and exports
-        a formatted document — ready to edit and publish.
+        Upload annual reports, interview recordings or financial spreadsheets.
+        A 4-agent AI pipeline extracts the facts, builds the narrative and exports
+        a formatted document, ready to edit and use!
       </div>
     </div>
     <div class="cta">
-      <div class="cta-label">Get started</div>
+      <div class="cta-label">Get started!</div>
       <div class="cta-title">Upload your source material</div>
       <div class="cta-desc">
         Open <strong>Upload Documents</strong> in the sidebar to add PDFs,
