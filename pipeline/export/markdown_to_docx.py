@@ -70,15 +70,32 @@ def markdown_to_docx(markdown: str) -> bytes:
                 p.runs[0].font.name = "Times New Roman"
         elif line.startswith("### "):
             p = doc.add_heading(line[4:].strip(), level=3)
+        elif line.strip().startswith("> "):
+            # Blockquote: strip > marker and any markdown italic asterisks, render italic
+            raw = line.strip()[2:].strip()
+            # Remove surrounding * or _ used for markdown italics
+            raw = re.sub(r"\*(.+?)\*", r"\1", raw)
+            raw = re.sub(r"_(.+?)_", r"\1", raw)
+            p = doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.4)
+            run = p.add_run(raw)
+            run.italic = True
+            run.font.name = "Times New Roman"
+            run.font.size = Pt(12)
         elif line.strip() == "":
             pass
         else:
-            text = line.strip()
-            text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+            # Split on **bold** markers to render them as actual bold runs
             p = doc.add_paragraph()
-            run = p.add_run(text)
-            run.font.name = "Times New Roman"
-            run.font.size = Pt(12)
+            parts = re.split(r"(\*\*.+?\*\*)", line.strip())
+            for part in parts:
+                if part.startswith("**") and part.endswith("**"):
+                    run = p.add_run(part[2:-2])
+                    run.bold = True
+                else:
+                    run = p.add_run(part)
+                run.font.name = "Times New Roman"
+                run.font.size = Pt(12)
 
         i += 1
 

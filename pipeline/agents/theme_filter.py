@@ -67,6 +67,11 @@ def _rule_based_filter(fact_sheet: FactSheet, theme: str) -> FactSheet:
     ]
     data["themes"] = [theme]
 
+    # strategic_initiatives and key_partnerships are always kept in full —
+    # they are too rich and cross-cutting to filter by keyword accurately.
+    data["strategic_initiatives"] = data.get("strategic_initiatives", [])
+    data["key_partnerships"] = data.get("key_partnerships", [])
+
     # If filter removed everything, keep original lists (avoid empty narrative)
     if not any([data["challenges"], data["interventions"], data["outcomes"], data["raw_facts"]]):
         return fact_sheet
