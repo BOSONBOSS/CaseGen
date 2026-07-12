@@ -20,17 +20,18 @@ than to miss a fact. Each field below MUST be populated if the text supports it.
 EXTRACTION RULES:
 1. company_name: Look in title, header, "About Us", Chairman's message.
 2. revenue: Look ONLY for TOTAL company financial revenue, turnover, or total sales expressed in currency (e.g. ¥ trillion, $ billion, ₹ crore). Do NOT extract operating income, profit, or revenue for a single business division/segment. Include currency symbol, unit (crore/million/billion/%), and year. If multiple figures exist, put the total company figure here. CRITICAL: Do NOT confuse unit sales volume (number of vehicles, products, or units sold) with financial revenue. If the text only provides sales in units (e.g. '10.3 million vehicles sold'), leave revenue as null — that is a production/sales count, NOT a financial figure.
-3. raw_facts: List EVERY numerical or quantitative fact you can find — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. Include the context for each number AND the year it refers to (e.g. "2024 worldwide sales: 10,385,902 units"). RECENCY RULE: If the data source contains figures for multiple years (e.g. a column per year), you MUST prioritise the most recent year's figures. The most recent year column will be marked with "⚠️ MOST RECENT DATA COLUMN" in the source text — use THOSE figures as the primary facts. Always label each figure with its year so the case study does not confuse historical data with current performance. Do NOT skip any number.
+3. raw_facts: List EVERY numerical or quantitative fact you can find — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. Include the context for each number AND the year it refers to (e.g. "2024 worldwide sales: 10,385,902 units"). RECENCY RULE: If the data source contains figures for multiple years (e.g. a column per year), you MUST prioritise the most recent year's figures. The most recent year column will be marked with "⚠️ MOST RECENT DATA COLUMN" in the source text — use THOSE figures as the primary facts. Always label each figure with its year so the case study does not confuse historical data with current performance. Do NOT skip any number. ARITHMETIC BAN: If a column is marked as "⚠️ WARNING: PARTIAL YEAR" or "CUMULATIVE" or "YTD", extract the number exactly as written — NEVER multiply, extrapolate, or annualise it to guess a full-year figure. Record it with a clear label such as "Jan–May 2026 cumulative worldwide sales: 4,140,444 units".
 4. timeline_events: List EVERY dated event, milestone, product launch, policy change, or achievement mentioned. Each entry must have a year (even approximate like "2023") and a clear description.
 5. challenges: List every CURRENT problem, obstacle, difficulty, or risk mentioned (e.g. operational, financial, regulatory). CRITICAL: Do NOT list historical challenges from decades ago (e.g. 1950s labor disputes, 1970s oil crisis) as current challenges. If the text mentions them purely as historical background, exclude them or place them in timeline_events, not here.
-6. interventions: List every initiative, programme, investment, technology, process, or strategic change the company took in response to challenges.
-7. outcomes: List every measurable or stated result, achievement, improvement, or outcome — including production milestones, market performance, and financial results.
+6. interventions: List every initiative, programme, investment, technology, process, or strategic change the company took in response to challenges. CRITICAL CAUSAL RULE: For each intervention, you MUST also capture (a) the strategic rationale — WHY this specific approach was chosen over alternatives, and (b) the mechanism — HOW it is expected to work. Format each entry as a SINGLE STRING (do not use a nested object/dict): "[Initiative name]: [what it is]. Rationale: [why chosen]. Mechanism: [how it works]. Expected outcome: [what it aims to achieve]."
+7. outcomes: List every measurable or stated result, achievement, improvement, or outcome — including production milestones, market performance, and financial results. For each outcome, state the CAUSAL LINK in the same SINGLE STRING: which specific intervention drove this result and by what mechanism.
 8. key_quotes: Extract ALL direct quotes (text inside quotation marks) from leadership, employees, or official statements. Include the full quote text and speaker name with title.
 9. key_people: All CURRENT, named leaders/executives with their exact title. Only include people who are currently active at the company. Do NOT list historical figures, founders who passed away, or people who are no longer employed at the company. If a person is mentioned purely in a historical context (e.g. the creator of a business system who is no longer alive), exclude them.
 10. themes: Up to 5 STRATEGIC topics reflected in this text.
 11. tagged_facts: For EVERY fact in raw_facts, challenges, interventions, and outcomes, create a tagged_facts entry linking that fact to a theme.
-12. strategic_initiatives: List EVERY named programme, brand launch, technology bet, or major strategic project (e.g. "Woven City", "ENGINE ReBORN", "bZ3X BEV launch"). Include its name, a rich description with all available details, and approximate year.
+12. strategic_initiatives: List EVERY named programme, brand launch, technology bet, or major strategic project (e.g. "Woven City", "ENGINE ReBORN", "bZ3X BEV launch"). Include its name, a rich description with all available details, the approximate year, and — critically — (a) the strategic rationale (WHY this initiative exists, what threat or opportunity it addresses), (b) the mechanism (HOW it works, not just what it is), and (c) which specific partners, technologies, or investments it relies on.
 13. key_partnerships: List EVERY named external partner, joint venture, or strategic alliance. Include partner name, the domain of the partnership, and a brief description.
+14. ANTI-HALLUCINATION RULE (ABSOLUTE): NEVER output the phrase '30 trillion' or '¥30 trillion' or any variant in any field (revenue, raw_facts, etc.) unless those exact words appear verbatim in the text you are reading. If no revenue figure is present in the text, set revenue to null. Do NOT estimate, infer, or calculate revenue from sales volumes, unit counts, or any other metric.
 
 CRITICAL: Do NOT leave timeline_events, challenges, interventions, outcomes, key_quotes, raw_facts, strategic_initiatives, or key_partnerships as empty arrays if there is ANY relevant content in the text. These are the most important fields.
 
@@ -273,6 +274,13 @@ def _normalise_for_validation(merged: dict, partials: list[dict] = None) -> dict
     for field in list_fields:
         if not isinstance(merged.get(field), list):
             merged[field] = []
+
+    # Ensure pure string fields are actually strings (not dicts).
+    for field in ("challenges", "interventions", "outcomes", "raw_facts", "themes", "key_people"):
+        merged[field] = [
+            str(item) if not isinstance(item, dict) else " ".join(f"{v}" for v in item.values())
+            for item in merged[field]
+        ]
 
     merged["timeline_events"] = [
         item if isinstance(item, dict) else {"year": None, "event": str(item), "source": None, "theme_tags": []}

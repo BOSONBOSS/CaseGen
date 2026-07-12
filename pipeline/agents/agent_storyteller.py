@@ -324,10 +324,17 @@ DATA INTEGRITY RULES (non-negotiable — enforced post-hoc by a code scrubber):
 4. Use ONLY named entities (people, products, partners, awards, programmes) that explicitly
    appear in the FactSheet. Describe anything absent generically.
 5. REVENUE / MARKET SIZE RULE: If the FactSheet does not explicitly state a total revenue or
-   market size figure, you MUST NOT invent one. Never write any currency + trillion figure
-   unless it explicitly appears verbatim in the FactSheet. Describe scale qualitatively.
+   market size figure, you MUST NOT invent one. SPECIFICALLY: NEVER write '¥30 trillion', '30
+   trillion yen', or ANY currency+trillion figure unless it appears verbatim in the FactSheet's
+   revenue or raw_facts fields. If revenue is null in the FactSheet, describe scale qualitatively
+   (e.g. "one of the world's largest automakers by production volume").
+5b. PARTIAL-YEAR DATA RULE: If a raw_fact is labelled as "Jan–May", "cumulative", "YTD", or
+   "partial year", you MUST cite it with that qualifier (e.g. "In the first five months of 2026,
+   Toyota sold 4.14 million units worldwide"). NEVER present a partial-year figure as if it is a
+   full annual total, and NEVER extrapolate or annualise a partial figure to estimate a full year.
 6. METRICS CLAIM RULE: NEVER write "specific quantitative metrics were not disclosed" or
    "no figures were available." If there is truly no data, simply omit that topic entirely.
+
 7. QUOTE VERBATIM RULE: Copy quotes CHARACTER-FOR-CHARACTER from key_quotes. Do NOT
    paraphrase, condense, or add words. If no exact match exists, write the point as prose.
 
@@ -354,6 +361,7 @@ LENGTH RULE: Write between {section.get("word_count_min", 400)} and {section.get
 {ctx}
 
 Return ONLY raw markdown text. Do NOT wrap it in a JSON object. Just write the prose directly.
+Do NOT include the section heading (e.g. "## {section.get("title", section_id)}") at the top of your text; it will be added automatically.
 
 FACT SHEET (section-relevant fields only):
 {section_facts_json}

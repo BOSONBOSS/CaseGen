@@ -60,6 +60,22 @@ def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
         return match.group()  # every token is sourced — keep it
 
     scrubbed = _HALLUCINATION_RE.sub(_should_remove, text)
+
+    # ── NUCLEAR FALLBACK ──────────────────────────────────────────────────────
+    # Even if '¥30 trillion' somehow entered the FactSheet whitelist through an
+    # Agent 1 hallucination, we unconditionally strip any sentence that contains
+    # the exact phrase "30 trillion". This is hardcoded Python — the LLM cannot
+    # override it regardless of what it outputs.
+    _THIRTY_TRILLION_RE = re.compile(
+        r"[^.!?\n]*?\b30\s*trillion\b[^.!?\n]*[.!?]?",
+        re.IGNORECASE,
+    )
+    def _nuclear_strip(m: re.Match) -> str:
+        print(f"[Agent 4] 💥 NUCLEAR SCRUB — removed '30 trillion' sentence: {m.group()[:120]!r}")
+        return ""
+    scrubbed = _THIRTY_TRILLION_RE.sub(_nuclear_strip, scrubbed)
+    # ─────────────────────────────────────────────────────────────────────────
+
     # Clean up any double blank lines left behind
     scrubbed = re.sub(r"\n{3,}", "\n\n", scrubbed)
     return scrubbed
@@ -126,6 +142,9 @@ def _merge_document(
     for section_id, title in _SECTION_ORDER:
         body = narrative.get(section_id, "").strip()
         if body:
+            # Strip a leading "## Title" the model may have emitted to prevent duplicate headings
+            body = re.sub(rf"^\s*#{{1,6}}\s*(?:The\s+)?{re.escape(title)}\s*\n+", "", body, flags=re.IGNORECASE)
+            body = re.sub(rf"^\s*#{{1,6}}\s*(?:The\s+)?{re.escape(section_id)}\s*\n+", "", body, flags=re.IGNORECASE)
             parts.append(f"\n## {title}\n\n{body}\n")
 
     if exhibits and exhibits.strip():
