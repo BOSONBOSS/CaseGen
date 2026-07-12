@@ -58,15 +58,15 @@ st.caption(f"{len(chunks)} text chunks loaded from your documents.")
 if "fact_sheet" not in st.session_state:
     progress_text = st.empty()
     progress_bar = st.progress(0, text="Initialising Agent 1...")
-    total_batches_ref = {"n": max(1, (len(chunks) + 9) // 10)}
+    total_batches_ref = {"n": max(1, (len(chunks) + 4) // 5)}
 
     def on_progress(batch_num, total_batches):
         total_batches_ref["n"] = total_batches
         pct = min(95, int(10 + (batch_num / total_batches) * 85))
-        progress_bar.progress(pct, text=f"Agent 1: batch {batch_num}/{total_batches}...")
+        progress_bar.progress(pct, text=f"Agent 1: batch {batch_num}/{total_batches}")
 
     try:
-        progress_text.markdown("**Agent 1** is reading your documents. This takes 1-3 minutes for large annual reports...")
+        progress_text.markdown("**Agent 1** is reading your documents. This may take longer for large annual reports...")
         fact_sheet = run_agent_1(chunks, on_progress=on_progress)
         progress_bar.progress(100, text="Done!")
         progress_text.empty()

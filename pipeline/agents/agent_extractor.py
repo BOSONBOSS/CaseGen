@@ -300,7 +300,7 @@ def _validate_with_retry(merged: dict, max_retries: int = 3) -> FactSheet:
 
 def run_agent_1(
     chunks: list[str],
-    batch_size: int = 10,
+    batch_size: int = 5,
     on_progress: Optional[Callable[[int, int], None]] = None,
 ) -> FactSheet:
     """

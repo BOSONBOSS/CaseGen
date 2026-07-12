@@ -58,7 +58,7 @@ FEW_SHOT_PATH = "templates/few_shot_examples.json"
 #Model Settings
 GEMINI_MODEL = "gemini-2.0-flash"
 WHISPER_MODEL = "base"
-CHUNK_SIZE = 2000
-CHUNK_OVERLAP = 300
+CHUNK_SIZE = 40000
+CHUNK_OVERLAP = 2000
 LLM_TEMPERATURE = 0.3
 MAX_OUTPUT_TOKENS = 32768

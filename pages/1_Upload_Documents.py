@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 from pipeline.ingest.docling_parser import parse_pdf
+from pipeline.ingest.fast_pdf_parser import parse_pdf_fast
 from pipeline.ingest.spreadsheet_parser import parse_spreadsheet
 from pipeline.ingest.whisper_audio import parse_audio
 from pipeline.ingest.web_parser import parse_url
@@ -30,6 +31,9 @@ st.markdown("""
     .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #2563EB; margin-bottom: 1rem; }
     .status-ok { color: #16a34a; font-size: 13px; }
     .status-err { color: #dc2626; font-size: 13px; }
+    .engine-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #64748B; margin: 0.85rem 0 0.15rem 0; }
+    .badge-fast { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:#dcfce7;color:#15803d;border-radius:99px;font-size:11px;font-weight:500;margin-top:4px; }
+    .badge-deep { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:#dbeafe;color:#1d4ed8;border-radius:99px;font-size:11px;font-weight:500;margin-top:4px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,7 +100,9 @@ if "extract_status" not in st.session_state:
 if "extract_warnings" not in st.session_state:
     st.session_state["extract_warnings"] = []
 
-if st.button("Extract and merge all sources", type="primary", use_container_width=True):
+extract_clicked = st.button("Extract and merge all sources", type="primary", use_container_width=True)
+
+if extract_clicked:
     if not docs and not audio and not url:
         st.warning("Add at least one file or URL before extracting.")
     else:
@@ -112,7 +118,11 @@ if st.button("Extract and merge all sources", type="primary", use_container_widt
                         st.toast(f"Parsing {file.name}...")
                         if file.name.lower().endswith(".pdf"):
                             pages = int(max_pages) if max_pages and max_pages > 0 else None
-                            text = parse_pdf(file, max_pages=pages)
+                            # Read toggle state from session_state since it's rendered at the bottom of the page
+                            if st.session_state.get("fast_mode_toggle", False):
+                                text = parse_pdf_fast(file, max_pages=pages)
+                            else:
+                                text = parse_pdf(file, max_pages=pages)
                         else:
                             text = parse_spreadsheet(file)
                         master_transcript[file.name] = text
@@ -157,6 +167,40 @@ if st.button("Extract and merge all sources", type="primary", use_container_widt
             else:
                 st.error("No sources could be extracted. Fix errors below and retry.")
 
+st.markdown("<br>", unsafe_allow_html=True)
+col_toggle, col_space, col_next = st.columns([2, 1, 1])
+
+transcript = st.session_state.get("master_transcript")
+total_chars = total_char_count(transcript) if transcript else 0
+can_proceed = transcript and total_chars >= 500 and all(
+    s.get("ok", False) for s in st.session_state.get("extract_status", {}).values()
+) if st.session_state.get("extract_status") else bool(transcript and total_chars >= 500)
+
+with col_toggle:
+    st.markdown('<div style="margin-top: -4px;"></div>', unsafe_allow_html=True)
+    fast_mode = st.toggle(
+        "Fast Mode (PyMuPDF)",
+        value=False,
+        key="fast_mode_toggle",
+        help=(
+            "**Fast Mode:** Extracts text in seconds. Best for text-heavy documents.\n\n"
+            "**Deep Mode (Docling):** Preserves complex tables. Takes longer."
+        )
+    )
+
+with col_next:
+    if st.button("Next: Configure", type="primary" if can_proceed else "secondary", use_container_width=True):
+        if not transcript:
+            st.error("Run extraction first.")
+        elif total_chars < 500:
+            st.error(f"Transcript too short ({total_chars} chars). Upload a fuller document (minimum 500 characters).")
+        elif st.session_state.get("extract_status") and not all(s.get("ok") for s in st.session_state["extract_status"].values()):
+            st.error("Fix failed extractions before continuing.")
+        else:
+            st.switch_page("pages/2_Configure_Case_Study.py")
+
+st.markdown("<hr style='margin: 2rem 0; border-color: #E2E8F0;'>", unsafe_allow_html=True)
+
 if st.session_state.get("extract_status"):
     st.markdown('<div class="section-label">Extraction Status</div>', unsafe_allow_html=True)
     for name, info in st.session_state["extract_status"].items():
@@ -175,23 +219,3 @@ if st.session_state.get("master_transcript"):
         from pipeline.ingest.merge_sources import merge_to_text
         preview = merge_to_text(st.session_state["master_transcript"])
         st.text(preview[:2000] + ("\n\n... (truncated)" if len(preview) > 2000 else ""))
-
-st.markdown("<br>", unsafe_allow_html=True)
-col_back, col_space, col_next = st.columns([1, 3, 1])
-
-transcript = st.session_state.get("master_transcript")
-total_chars = total_char_count(transcript) if transcript else 0
-can_proceed = transcript and total_chars >= 500 and all(
-    s.get("ok", False) for s in st.session_state.get("extract_status", {}).values()
-) if st.session_state.get("extract_status") else bool(transcript and total_chars >= 500)
-
-with col_next:
-    if st.button("Next: Configure", type="primary" if can_proceed else "secondary", use_container_width=True):
-        if not transcript:
-            st.error("Run extraction first.")
-        elif total_chars < 500:
-            st.error(f"Transcript too short ({total_chars} chars). Upload a fuller document (minimum 500 characters).")
-        elif st.session_state.get("extract_status") and not all(s.get("ok") for s in st.session_state["extract_status"].values()):
-            st.error("Fix failed extractions before continuing.")
-        else:
-            st.switch_page("pages/2_Configure_Case_Study.py")
