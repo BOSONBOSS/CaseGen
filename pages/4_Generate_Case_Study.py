@@ -30,7 +30,7 @@ missing = [k for k in required if k not in st.session_state or not st.session_st
 if missing:
     st.error(f"Missing session data: {', '.join(missing)}. Complete earlier steps first.")
     if st.button("Back to Page 3"):
-        st.switch_page("pages/3_Select_Angle.py")
+        st.switch_page("pages/3_Select_Theme.py")
     st.stop()
 
 if "narrative" not in st.session_state or not st.session_state.get("narrative"):
@@ -104,7 +104,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_back, _, col_next = st.columns([1, 3, 1])
 with col_back:
     if st.button("Back", use_container_width=True):
-        st.switch_page("pages/3_Select_Angle.py")
+        st.switch_page("pages/3_Select_Theme.py")
 with col_next:
     if st.button("Next: Edit & Export", type="primary", use_container_width=True):
         st.session_state.pop("final_markdown", None)

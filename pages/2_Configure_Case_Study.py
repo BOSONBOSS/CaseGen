@@ -164,7 +164,7 @@ with col_back:
         st.switch_page("pages/1_Upload_Documents.py")
 
 with col_next:
-    if st.button("Next: Select Angle", type="primary", use_container_width=True):
+    if st.button("Next: Select Theme", type="primary", use_container_width=True):
 
         # 1. Save all UI config to session state
         st.session_state["ui_config"] = {
@@ -198,4 +198,4 @@ with col_next:
             st.session_state["chunks"] = []
 
         # 3. Navigate to Page 3
-        st.switch_page("pages/3_Select_Angle.py")
+        st.switch_page("pages/3_Select_Theme.py")

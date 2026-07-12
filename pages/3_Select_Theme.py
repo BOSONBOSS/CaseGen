@@ -6,7 +6,7 @@ from pipeline.agents.theme_filter import filter_by_theme
 from pipeline.persistence.session_store import save_fact_sheet
 
 st.set_page_config(
-    page_title="Select Angle | CaseGen",
+    page_title="Select Theme | CaseGen",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -33,7 +33,7 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 st.sidebar.divider()
-st.sidebar.markdown("**Step 3 of 5** — Select Angle")
+st.sidebar.markdown("**Step 3 of 5** — Select Theme")
 
 with st.sidebar.expander("Dev Tools", expanded=False):
     if st.button("Re-run Agent 1", key="sidebar_rerun"):
@@ -43,7 +43,7 @@ with st.sidebar.expander("Dev Tools", expanded=False):
     if st.button("Show chunk count", key="sidebar_chunks"):
         st.info(f"{len(st.session_state.get('chunks', []))} chunks in session")
 
-st.markdown('<div class="page-title">Select Your Case Study Angle</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-title">Select Your Case Study Theme</div>', unsafe_allow_html=True)
 st.markdown('<div class="page-desc">Agent 1 extracts facts and discovers themes. Pick the focus for your case study.</div>', unsafe_allow_html=True)
 
 if "chunks" not in st.session_state or not st.session_state["chunks"]:
@@ -157,7 +157,7 @@ if custom_theme and custom_theme.strip():
     selected_theme = custom_theme.strip()
 
 st.session_state["selected_theme"] = selected_theme
-st.info(f"Selected angle: **{selected_theme}**")
+st.info(f"Selected theme: **{selected_theme}**")
 
 st.markdown("<br>", unsafe_allow_html=True)
 col_back, col_space, col_next = st.columns([1, 3, 1])
