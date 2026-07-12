@@ -9,41 +9,19 @@ _ANALYST_PROMPT = """
 You are a business case study analyst. Generate comprehensive exhibits and discussion questions from the FactSheet ONLY.
 
 EXHIBIT RULES:
-- Generate AS MANY exhibits as the data supports (target 6-12).
+- Generate ONLY data-rich, quantitative exhibits. Fewer, heavier tables are better (target 3-6 exhibits).
 - Each exhibit must be a properly formatted Markdown table with a bold heading above it.
 - Do NOT invent numbers. Use ONLY data from the FactSheet.
 - If a category has no data, skip that exhibit.
-
-{pre_extracted_lists}
+- DO NOT generate categorical exhibits like Quotes, Key People, Timeline, Challenges, Interventions, or Outcomes.
 
 Generate exhibits in this priority order (include all for which data exists):
 
-1. **Key Company Facts**: A two-column table of core company statistics (founding year, HQ, industry, revenue, employee count, key metrics from raw_facts and outcomes).
-
-2. **Key Metrics & Data**: All numerical figures, percentages, financials, and production metrics from raw_facts, outcomes, and tagged_facts. Columns: Metric | Value | Context.
-
-3. **Key People**: From key_people. Columns: Name | Role/Title.
-
-4. **Strategic Initiatives**: From strategic_initiatives. Columns: Initiative | Description | Year. Write full, rich descriptions.
-
-5. **Key Partnerships**: From key_partnerships. Columns: Partner | Domain | Description.
-
-6. **Timeline of Key Events**: From timeline_events, sorted chronologically. Columns: Year | Event.
-
-7. **Key Challenges**: From challenges. Columns: # | Challenge.
-   ⚠️ You MUST include EVERY challenge listed in the PRE-EXTRACTED CHALLENGES above. The table row count must match.
-
-8. **Key Interventions**: From interventions. Columns: # | Intervention / Approach.
-   ⚠️ You MUST include EVERY intervention listed in the PRE-EXTRACTED INTERVENTIONS above. The table row count must match.
-
-9. **Key Outcomes & Results**: From outcomes. Columns: # | Outcome.
-   ⚠️ You MUST include EVERY outcome listed in the PRE-EXTRACTED OUTCOMES above. The table row count must match.
-
-10. **Key Quotes**: From key_quotes. Columns: Quote | Speaker.
-
-11. **Carbon Neutrality / Sustainability Targets** (if data exists in raw_facts or outcomes): Columns: Target | Value | Year.
-
-12. **Technology Comparison** (if battery, engine, or technology comparison data exists in raw_facts or strategic_initiatives): Columns: Technology | Specification | Performance.
+1. **Financial Performance**: Extract all revenue, profit, operating income, and other financial figures across different years or segments from the FactSheet. Columns: Metric | Value | Context.
+2. **Key Metrics & Data**: All non-financial numerical figures, percentages, production metrics, sales volume, etc., from raw_facts, outcomes, and tagged_facts. Columns: Metric | Value | Context.
+3. **Market / Competitive Comparison**: If there is data about market share, competitors, rankings, or industry scale. Columns: Category | Company/Metric | Value.
+4. **Cost / Process Breakdown**: If there is data regarding operational efficiency, cost reductions, supply chain metrics, or process improvements. Columns: Process/Area | Metric | Improvement/Impact.
+5. **Strategic Investments / Targets**: Any heavy data related to investments, budget allocations, or quantifiable sustainability/technology targets. Columns: Area/Initiative | Target/Investment | Deadline/Impact.
 
 Format all exhibits as:
 **Exhibit N: [Title]**
@@ -65,45 +43,6 @@ EXHIBITS CONFIG: {exhibits_config}
 FACT SHEET:
 {fact_sheet_json}
 """
-
-
-def _build_analyst_lists(fact_sheet) -> str:
-    """
-    Fix D: pre-extract challenges, interventions, and outcomes as explicit
-    numbered plain-text lists and inject them into the analyst prompt so
-    the LLM sees the exact count and cannot truncate the exhibit tables.
-    """
-    fs = fact_sheet.model_dump() if hasattr(fact_sheet, "model_dump") else fact_sheet
-    blocks = []
-
-    challenges = [str(c) for c in (fs.get("challenges") or []) if c]
-    if challenges:
-        lines = "\n".join(f"  {i+1}. {c}" for i, c in enumerate(challenges))
-        blocks.append(
-            f"PRE-EXTRACTED CHALLENGES ({len(challenges)} total — ALL must appear in Exhibit 7):\n{lines}"
-        )
-
-    interventions = [str(i) for i in (fs.get("interventions") or []) if i]
-    # Add strategic initiative names not already in interventions list
-    for si in (fs.get("strategic_initiatives") or []):
-        name = si.get("name", "") if isinstance(si, dict) else str(si)
-        if name and not any(name.lower() in item.lower() for item in interventions):
-            desc = si.get("description", "") if isinstance(si, dict) else ""
-            interventions.append(f"{name}" + (f" — {desc[:120]}" if desc else ""))
-    if interventions:
-        lines = "\n".join(f"  {i+1}. {item}" for i, item in enumerate(interventions))
-        blocks.append(
-            f"PRE-EXTRACTED INTERVENTIONS ({len(interventions)} total — ALL must appear in Exhibit 8):\n{lines}"
-        )
-
-    outcomes = [str(o) for o in (fs.get("outcomes") or []) if o]
-    if outcomes:
-        lines = "\n".join(f"  {i+1}. {o}" for i, o in enumerate(outcomes))
-        blocks.append(
-            f"PRE-EXTRACTED OUTCOMES ({len(outcomes)} total — ALL must appear in Exhibit 9):\n{lines}"
-        )
-
-    return "\n\n".join(blocks)
 
 
 def _question_count(audience: str) -> int:
@@ -130,16 +69,12 @@ def run_agent_3(fact_sheet, ui_config: dict) -> dict:
     theme = ui_config.get("selected_theme") or "General Business Analysis"
     num_q = _question_count(audience)
 
-    # Fix D: build pre-extracted lists block
-    pre_extracted_lists = _build_analyst_lists(fact_sheet)
-
     prompt = _ANALYST_PROMPT.format(
         num_questions=num_q,
         audience_level=_audience_level(audience),
         theme=theme,
         exhibits_config=json.dumps(EXHIBITS_CONFIG),
         fact_sheet_json=fact_sheet.model_dump_json(indent=2),
-        pre_extracted_lists=pre_extracted_lists,
     )
 
     result = generate_json(prompt)

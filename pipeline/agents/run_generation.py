@@ -25,11 +25,13 @@ def _build_exhibit_index(exhibits_markdown: str) -> dict:
 def run_generation(
     filtered_fact_sheet,
     ui_config: dict,
-    on_agent2_progress: Optional[Callable[[], None]] = None,
+    on_agent2_progress: Optional[Callable[[int, int], None]] = None,
     on_agent3_progress: Optional[Callable[[], None]] = None,
 ) -> dict:
     """
     Run Agent 3 first (to build exhibit index), then Agent 2 (narrative with inline refs).
+    on_agent3_progress() called once when Agent 3 finishes.
+    on_agent2_progress(current, total) called after each section Agent 2 completes.
     Returns {"narrative": dict, "exhibits": str, "discussion_questions": list}.
     """
     # Agent 3 runs FIRST so we have numbered exhibits before prose is written
@@ -41,9 +43,13 @@ def run_generation(
     exhibit_index = _build_exhibit_index(exhibits_md)
 
     # Agent 2 receives exhibit index so it can write "(see Exhibit N)" inline
-    narrative = run_agent_2(filtered_fact_sheet, ui_config, exhibit_index=exhibit_index)
-    if on_agent2_progress:
-        on_agent2_progress()
+    # on_agent2_progress fires per-section so the progress bar actually moves
+    narrative = run_agent_2(
+        filtered_fact_sheet,
+        ui_config,
+        exhibit_index=exhibit_index,
+        on_section_progress=on_agent2_progress,
+    )
 
     return {
         "narrative": narrative,

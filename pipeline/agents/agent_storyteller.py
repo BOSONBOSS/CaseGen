@@ -188,12 +188,15 @@ FACT SHEET (section-relevant fields only):
 """
 
 
-def run_agent_2(fact_sheet, ui_config: dict, exhibit_index: dict | None = None) -> dict:
-    """Generate all narrative sections sequentially. Returns dict section_id -> markdown."""
+def run_agent_2(fact_sheet, ui_config: dict, exhibit_index: dict | None = None, on_section_progress=None) -> dict:
+    """Generate all narrative sections sequentially. Returns dict section_id -> markdown.
+    on_section_progress(current, total) is called after each section completes.
+    """
     case_template, few_shot = _load_templates()
     narrative = {}
+    total = len(_SECTION_IDS)
 
-    for section_id in _SECTION_IDS:
+    for i, section_id in enumerate(_SECTION_IDS):
         print(f"[Agent 2] Generating section: {section_id}...")
         prompt = _section_prompt(
             section_id,
@@ -205,6 +208,8 @@ def run_agent_2(fact_sheet, ui_config: dict, exhibit_index: dict | None = None) 
         )
         result = generate_json(prompt)
         narrative[section_id] = result.get(section_id, "")
+        if on_section_progress:
+            on_section_progress(i + 1, total)
 
     return narrative
 

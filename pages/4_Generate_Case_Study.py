@@ -39,11 +39,13 @@ if "narrative" not in st.session_state or not st.session_state.get("narrative"):
     bar3 = col3.progress(0, text="Agent 3: waiting...")
     status = st.empty()
 
-    def on_a2():
-        bar2.progress(100, text="Agent 2: narrative complete ✓")
-
     def on_a3():
         bar3.progress(100, text="Agent 3: exhibits complete ✓")
+        bar2.progress(5, text="Agent 2: starting narrative...")
+
+    def on_a2(current, total):
+        pct = int((current / total) * 100)
+        bar2.progress(pct, text=f"Agent 2: section {current}/{total} complete...")
 
     try:
         status.markdown("**Agent 3** is building exhibits first… then **Agent 2** will write the narrative with exhibit references…")
