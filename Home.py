@@ -30,17 +30,60 @@ if "session_restored" not in st.session_state:
                 st.session_state["final_markdown"] = load_case_markdown(case_path)
                 st.session_state["session_restored"] = True
                 st.rerun()
+
 # ── Global styles ─────────────────────────────────────────────────────────────
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<div>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Reset and base */
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
-
-.block-container { padding-top: 2rem !important; max-width: 860px; }
+.block-container { padding-top: 2rem !important; max-width: 960px; }
 section[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #E2E8F0; }
+/* Hero container styling using :has() to target specific st.container */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .hero-marker) {
+    border: 1px solid #E2E8F0;
+    border-left: 6px solid #2563EB;
+    border-radius: 18px;
+    background: #ffffff;
+    padding: 2.5rem 2rem !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+/* CTA box styling — shrink-wrapped to its content, light shaded fill */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #F8FAFC;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+    padding: 1rem 2rem !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    max-width: 300px;
+    margin: 0 auto;
+}
+/* Override CTA button styling */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) button {
+    background-color: #2563EB !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 1rem !important;
+    margin-top: 4px;
+}
+div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) button:hover {
+    background-color: #1D4ED8 !important;
+    color: #ffffff !important;
+}
 </style>
+</div>
 """, unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -50,186 +93,132 @@ st.sidebar.markdown("""
 <div style="font-size:12px;color:#94A3B8;">AI Case Study Generator</div>
 </div>
 """, unsafe_allow_html=True)
-st.sidebar.divider()
-st.sidebar.caption("Use the sidebar to navigate between pages.")
 
-# ── Page HTML (all in one components call to avoid Markdown code-block issue) ─
+# ── Hero Section ──────────────────────────────────────────────────────────────
+with st.container():
+    st.markdown('<div class="hero-marker"></div>', unsafe_allow_html=True)
+    hero_col, cta_col = st.columns([1.6, 1], gap="large")
+
+    with hero_col:
+        st.markdown("""
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#2563EB;">
+                CASEGEN
+            </div>
+            <div style="font-family:'DM Serif Display', Georgia, serif; font-size:32px; font-weight:400; line-height:1.2; color:#0F172A;">
+                From raw company data to a publishable case study.
+            </div>
+            <div style="font-size:15px; line-height:1.6; color:#64748B; margin-top:8px;">
+                Upload your source material and let AI draft your case study.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cta_col:
+        with st.container():
+            st.markdown('<div class="cta-marker"></div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div style="text-align:justify; white-space:nowrap; margin-top:12px;">
+                <div style="font-size:17px; font-weight:600; color:#0F172A; margin-bottom:6px;">
+                    Generate your case study.
+                </div>
+                <div style="font-size:15px; color:#64748B; margin-bottom:10px;">
+                    Click below to upload now!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Get started", type="primary", use_container_width=True, key="get_started"):
+                st.switch_page("pages/1_Upload_Documents.py")
+
+# ── Steps + formats + footer ───────────────────────────────────────────────────
 components.html("""
 <!DOCTYPE html>
 <html>
 <head>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background: transparent; color: #0F172A; }
 
-.hero {
-  display: flex;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #ffffff;
-  margin-bottom: 16px;
-}
-.spine { width: 5px; background: #2563EB; flex-shrink: 0; }
-.hero-body {
-  display: grid;
-  grid-template-columns: 1fr 252px;
-  gap: 2rem;
-  padding: 2.25rem 1.75rem;
-  width: 100%;
-}
-.eyebrow {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #2563EB;
-  margin-bottom: 10px;
-}
-.headline {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 28px;
-  font-weight: 400;
-  line-height: 1.28;
-  color: #0F172A;
-  margin-bottom: 14px;
-}
-.sub {
-  font-size: 14px;
-  line-height: 1.65;
-  color: #64748B;
-}
-.cta {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 1.25rem 1.125rem;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.cta-label {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #94A3B8;
-}
-.cta-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #0F172A;
-}
-.cta-desc {
-  font-size: 13px;
-  color: #64748B;
-  line-height: 1.55;
-}
-
 .steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 .step {
   background: #ffffff;
   border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 .step-num {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: #2563EB;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 .step-title {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #0F172A;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .step-desc {
-  font-size: 12px;
+  font-size: 13px;
   color: #64748B;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .formats {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 32px;
 }
-.formats-label { font-size: 12px; color: #94A3B8; }
+.formats-label { font-size: 13px; color: #94A3B8; font-weight: 500; margin-right: 4px; }
 .tag {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 3px 10px;
+  padding: 4px 14px;
   border-radius: 99px;
   border: 1px solid #E2E8F0;
-  color: #64748B;
-  background: #F8FAFC;
+  color: #334155;
+  background: #ffffff;
 }
 
 .footer {
-  font-size: 12px;
+  font-size: 13px;
   color: #94A3B8;
   padding-top: 16px;
-  border-top: 1px solid #E2E8F0;
   line-height: 1.6;
 }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="spine"></div>
-  <div class="hero-body">
-    <div>
-      <div class="eyebrow">CaseGen</div>
-      <div class="headline">From raw company data<br>to a publishable case study.</div>
-      <div class="sub">
-        Upload annual reports, interview recordings or financial spreadsheets.
-        A 4-agent AI pipeline extracts the facts, builds the narrative and exports
-        a formatted document, ready to edit and use!
-      </div>
-    </div>
-    <div class="cta">
-      <div class="cta-label">Get started!</div>
-      <div class="cta-title">Upload your source material</div>
-      <div class="cta-desc">
-        Open <strong>Upload Documents</strong> in the sidebar to add PDFs,
-        audio files, Excel sheets, or paste a link to a web article.
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="steps">
   <div class="step">
     <div class="step-num">01</div>
     <div class="step-title">Upload sources</div>
-    <div class="step-desc">PDFs, audio files, Excel sheets, or a web article link</div>
+    <div class="step-desc">PDFs, audio, Excel, or a web link</div>
   </div>
   <div class="step">
     <div class="step-num">02</div>
     <div class="step-title">Set scope</div>
-    <div class="step-desc">Choose tone, audience, discipline, and citation format</div>
+    <div class="step-desc">Tone, audience, discipline, citations</div>
   </div>
   <div class="step">
     <div class="step-num">03</div>
     <div class="step-title">Generate</div>
-    <div class="step-desc">Agents extract facts, select a theme, and write the narrative</div>
+    <div class="step-desc">Facts extracted, theme picked, narrative written</div>
   </div>
   <div class="step">
     <div class="step-num">04</div>
     <div class="step-title">Export</div>
-    <div class="step-desc">Review, edit, and download as a Word document or PDF</div>
+    <div class="step-desc">Review, edit, download Word or PDF</div>
   </div>
 </div>
 
@@ -241,11 +230,6 @@ body { font-family: 'Inter', sans-serif; background: transparent; color: #0F172A
   <span class="tag">Web links</span>
 </div>
 
-<div class="footer">
-  Everything runs locally on your device — no cloud costs, no hidden fees.<br>
-  Built with a 4-agent pipeline: fact extraction, narrative writing, exhibit generation, and fact-checking.
-</div>
-
 </body>
 </html>
-""", height=520, scrolling=False)
+""", height=280, scrolling=False)
