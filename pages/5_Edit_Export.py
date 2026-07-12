@@ -102,7 +102,10 @@ st.session_state["final_markdown"] = edited
 st.markdown("<br>", unsafe_allow_html=True)
 dl1, dl2, _ = st.columns([1, 1, 2])
 
-company_safe = st.session_state["filtered_fact_sheet"].company_name.replace(" ", "_")[:30]
+if "filtered_fact_sheet" in st.session_state:
+    company_safe = st.session_state["filtered_fact_sheet"].company_name.replace(" ", "_")[:30]
+else:
+    company_safe = "generated"
 
 with dl1:
     try:
