@@ -46,9 +46,9 @@ if "narrative" not in st.session_state or not st.session_state.get("narrative"):
         bar3.progress(100, text="Agent 3: exhibits complete ✓")
 
     try:
-        status.markdown("**Agent 2** is writing the narrative… &nbsp; **Agent 3** is building exhibits…")
-        bar2.progress(30, text="Agent 2: writing narrative...")
+        status.markdown("**Agent 3** is building exhibits first… then **Agent 2** will write the narrative with exhibit references…")
         bar3.progress(30, text="Agent 3: building exhibits...")
+        bar2.progress(0, text="Agent 2: waiting for exhibits...")
 
         result = run_generation(
             st.session_state["filtered_fact_sheet"],
@@ -60,6 +60,8 @@ if "narrative" not in st.session_state or not st.session_state.get("narrative"):
         st.session_state["narrative"] = result["narrative"]
         st.session_state["exhibits"] = result["exhibits"]
         st.session_state["discussion_questions"] = result["discussion_questions"]
+        # Store the exhibit index so Page 5 can pass it to regenerate_section
+        st.session_state["exhibit_index"] = result.get("exhibit_index", {})
         status.empty()
         bar2.empty()
         bar3.empty()

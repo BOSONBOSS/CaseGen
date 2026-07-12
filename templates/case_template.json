@@ -5,8 +5,8 @@
     {
       "id": "background",
       "title": "Company Background",
-      "word_count_min": 400,
-      "word_count_max": 1200,
+      "word_count_min": 500,
+      "word_count_max": 2000,
       "must_include": [
         "Founding year and founders ONLY if present in the FactSheet; otherwise omit entirely — never invent a founder name or year",
         "Core business / product",
@@ -17,8 +17,8 @@
     {
       "id": "industry_context",
       "title": "Industry Context",
-      "word_count_min": 200,
-      "word_count_max": 800,
+      "word_count_min": 400,
+      "word_count_max": 1500,
       "must_include": [
         "Market size or growth rate (only if supported by the FactSheet; otherwise describe qualitatively)",
         "Name specific competitors ONLY if they appear in the FactSheet; otherwise refer to 'established competitors' generically — never invent company names",
@@ -28,8 +28,8 @@
     {
       "id": "challenge",
       "title": "The Challenge",
-      "word_count_min": 300,
-      "word_count_max": 800,
+      "word_count_min": 400,
+      "word_count_max": 1500,
       "must_include": [
         "Specific problem description",
         "Timeline of the problem's emergence",
@@ -40,8 +40,8 @@
     {
       "id": "intervention",
       "title": "Intervention / Approach",
-      "word_count_min": 500,
-      "word_count_max": 1200,
+      "word_count_min": 600,
+      "word_count_max": 2000,
       "must_include": [
         "Actions taken (specific initiatives, process changes)",
         "Decision maker(s) involved (named protagonist)",
@@ -52,8 +52,8 @@
     {
       "id": "results",
       "title": "Results & Impact",
-      "word_count_min": 100,
-      "word_count_max": 600,
+      "word_count_min": 400,
+      "word_count_max": 1500,
       "must_include": [
         "Quantitative outcomes (before vs. after metrics)",
         "Qualitative outcomes (culture, reputation, employee feedback)",
@@ -63,8 +63,8 @@
     {
       "id": "learnings",
       "title": "Learning Outcomes",
-      "word_count_min": 200,
-      "word_count_max": 500,
+      "word_count_min": 350,
+      "word_count_max": 800,
       "must_include": [
         "Key takeaways for managers/students",
         "Transferable principles",

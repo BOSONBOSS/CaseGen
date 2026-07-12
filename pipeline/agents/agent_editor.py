@@ -15,6 +15,40 @@ _SECTION_ORDER = [
     ("learnings", "Learning Outcomes"),
 ]
 
+def _pick_best_quote(key_quotes: list) -> tuple[str, str]:
+    """
+    Select the single most impactful verbatim quote for the case study header.
+    Scores by: (1) speaker seniority -- Chairman/President/CEO rank highest,
+               (2) quote length -- longer quotes tend to be more substantive.
+    Returns (quote_text, speaker_label) or ("", "") if no suitable quote found.
+    """
+    SENIORITY = {
+        "chairman": 10, "president": 9, "ceo": 9, "chief executive": 9,
+        "coo": 7, "cfo": 7, "managing director": 7, "md": 7,
+        "director": 5, "general manager": 4, "manager": 3,
+    }
+    MIN_QUOTE_LENGTH = 40  # skip one-liner slogans
+
+    best_score = -1
+    best_quote = ("", "")
+
+    for q in key_quotes:
+        q_text = q.quote if hasattr(q, "quote") else q.get("quote", "")
+        q_speaker = q.speaker if hasattr(q, "speaker") else q.get("speaker", "")
+        if not q_text or len(q_text) < MIN_QUOTE_LENGTH:
+            continue
+        speaker_lower = (q_speaker or "").lower()
+        seniority_score = max(
+            (v for k, v in SENIORITY.items() if k in speaker_lower),
+            default=1,
+        )
+        length_score = min(len(q_text) / 50, 5)  # cap to avoid runaway length bias
+        score = seniority_score + length_score
+        if score > best_score:
+            best_score = score
+            best_quote = (q_text, q_speaker)
+
+    return best_quote
 
 def _merge_document(
     narrative: dict,
@@ -27,12 +61,9 @@ def _merge_document(
     parts = [f"# {company_name}: {selected_theme}\n"]
 
     if fact_sheet.key_quotes:
-        first_quote = fact_sheet.key_quotes[0]
-        # Depending on Pydantic version and how it's structured, it could be a dict or object
-        q_text = first_quote.quote if hasattr(first_quote, "quote") else first_quote.get("quote", "")
-        q_speaker = first_quote.speaker if hasattr(first_quote, "speaker") else first_quote.get("speaker", "")
+        q_text, q_speaker = _pick_best_quote(fact_sheet.key_quotes)
         if q_text:
-            parts.append(f"> \"{q_text}\" — *{q_speaker}*\n")
+            parts.append(f"> \"{q_text}\" \u2014 *{q_speaker}*\n")
 
     for section_id, title in _SECTION_ORDER:
         body = narrative.get(section_id, "").strip()

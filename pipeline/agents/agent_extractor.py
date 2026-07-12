@@ -112,6 +112,14 @@ Rules:
   the most detailed version. Never output an empty list for these fields if any
   partial had data in them.
 
+ANTI-TRUNCATION RULE (most important):
+Before you output, count the total items in challenges, interventions, and outcomes
+across ALL partials. Your output for each of these fields MUST contain AT LEAST
+that many UNIQUE items (after deduplication). If partial A has 5 challenges and
+partial B has 4 challenges that are different, your output must have at least 9
+challenges. You are NOT allowed to summarise or compress these lists — include every
+distinct item verbatim from whichever partial contains the most detail.
+
 OUTPUT ONLY VALID JSON with the same structure as input fragments.
 
 PARTIAL EXTRACTIONS:

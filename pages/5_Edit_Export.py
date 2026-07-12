@@ -85,6 +85,7 @@ if can_regenerate:
                         st.session_state["filtered_fact_sheet"],
                         st.session_state["ui_config"],
                         st.session_state["narrative"],
+                        exhibit_index=st.session_state.get("exhibit_index"),
                     )
                     st.session_state["narrative"] = updated
                     st.session_state.pop("final_markdown", None)

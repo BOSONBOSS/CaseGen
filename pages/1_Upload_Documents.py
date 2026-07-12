@@ -105,7 +105,7 @@ if st.button("Extract and merge all sources", type="primary", use_container_widt
         status: dict = {}
         warnings: list = []
 
-        with st.spinner("Processing files... (Audio transcription may take a few minutes)"):
+        with st.spinner("Processing files... (Audio transcription may take longer)"):
             if docs:
                 for file in docs:
                     try:
