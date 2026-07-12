@@ -17,11 +17,22 @@ EXHIBIT RULES:
 
 Generate exhibits in this priority order (include all for which data exists):
 
-1. **Financial Performance**: Extract all revenue, profit, operating income, and other financial figures across different years or segments from the FactSheet. Columns: Metric | Value | Context.
-2. **Key Metrics & Data**: All non-financial numerical figures, percentages, production metrics, sales volume, etc., from raw_facts, outcomes, and tagged_facts. Columns: Metric | Value | Context.
+1. **Financial Performance**: Extract all revenue, profit, operating income, and financial figures from the FactSheet.
+   ⚠️ CRITICAL: If the FactSheet "revenue" field is null or empty AND there are no explicit financial figures (revenue/profit/margins) in raw_facts or outcomes, SKIP this exhibit entirely. Do NOT generate a row that says "Revenue: Significant" or any vague placeholder. Instead, fold any financial-adjacent data (e.g. operating income, value chain income, cost reduction percentages) into Exhibit 2 (Key Metrics).
+   Columns: Metric | Value | Context.
+
+2. **Key Metrics & Data**: All numerical figures from raw_facts, outcomes, and tagged_facts. This MUST include:
+   - Production/deployment metrics (e.g. "200 fuel-cell trucks operational", "180 fuel-cell buses")
+   - Technical performance specs (e.g. "1,000 km driving range", "20-minute charge time", "40% cost reduction")
+   - Sales volume and market figures (e.g. "3.5 million BEV units target by 2030")
+   - Any efficiency improvements (e.g. "10-12% fuel economy improvement", "20% hydrogen efficiency gain")
+   Columns: Metric | Value | Context.
+
 3. **Market / Competitive Comparison**: If there is data about market share, competitors, rankings, or industry scale. Columns: Category | Company/Metric | Value.
+
 4. **Cost / Process Breakdown**: If there is data regarding operational efficiency, cost reductions, supply chain metrics, or process improvements. Columns: Process/Area | Metric | Improvement/Impact.
-5. **Strategic Investments / Targets**: Any heavy data related to investments, budget allocations, or quantifiable sustainability/technology targets. Columns: Area/Initiative | Target/Investment | Deadline/Impact.
+
+5. **Strategic Investments / Targets**: Any data related to investments, budget allocations, or quantifiable sustainability/technology targets. Columns: Area/Initiative | Target/Investment | Deadline/Impact.
 
 Format all exhibits as:
 **Exhibit N: [Title]**

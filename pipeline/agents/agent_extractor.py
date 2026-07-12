@@ -113,12 +113,20 @@ Rules:
   partial had data in them.
 
 ANTI-TRUNCATION RULE (most important):
-Before you output, count the total items in challenges, interventions, and outcomes
-across ALL partials. Your output for each of these fields MUST contain AT LEAST
-that many UNIQUE items (after deduplication). If partial A has 5 challenges and
-partial B has 4 challenges that are different, your output must have at least 9
-challenges. You are NOT allowed to summarise or compress these lists — include every
-distinct item verbatim from whichever partial contains the most detail.
+Before you output, count the total items in EACH of the following fields
+across ALL partials: challenges, interventions, outcomes, raw_facts, strategic_initiatives.
+Your output for EACH of these fields MUST contain AT LEAST that many UNIQUE items
+(after deduplication). You are NOT allowed to summarise, compress, or drop any item
+from any of these lists. Rules per field:
+- raw_facts: every distinct numerical or quantitative fact must survive — especially
+  specific performance specs (e.g. "20-minute charge time", "40% cost reduction",
+  "200 fuel-cell trucks operational"). Do NOT merge two different figures into one entry.
+- strategic_initiatives: every named programme, platform, or R&D initiative must survive —
+  including software-defined vehicles (SDVs), motorsports programmes, platform architecture
+  (e.g. TNGA), and any other named strategic project. Do NOT drop an initiative just because
+  a similar one exists; keep the most detailed version of each distinct named initiative.
+- challenges / interventions / outcomes: same rule as above — keep every distinct item,
+  verbatim from whichever partial contains the most detail.
 
 OUTPUT ONLY VALID JSON with the same structure as input fragments.
 
