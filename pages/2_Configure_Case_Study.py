@@ -138,7 +138,7 @@ with st.container(border=True):
 
         data_privacy = st.toggle(
             "Enable Data Privacy Masking",
-            value=True,
+            value=False,
             help="ON: Replaces exact figures with directional language. OFF: Uses exact raw numbers."
         )
 
