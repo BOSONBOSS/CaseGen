@@ -146,13 +146,13 @@ if extract_clicked:
                     try:
                         st.toast(f"Extracting {u[:40]}...")
                         text, web_warning = parse_url(u)
-                        key = u[:80]
+                        key = u
                         master_transcript[key] = text
                         status[key] = {"ok": True, "chars": len(text)}
                         if web_warning:
                             warnings.append(web_warning)
                     except Exception as e:
-                        status[u[:80]] = {"ok": False, "error": str(e)}
+                        status[u] = {"ok": False, "error": str(e)}
 
             combined = " ".join(master_transcript.values())
             junk_warning = detect_homepage_junk(combined)
@@ -182,7 +182,7 @@ with col_toggle:
     st.markdown('<div style="margin-top: -4px;"></div>', unsafe_allow_html=True)
     fast_mode = st.toggle(
         "Fast Mode (PyMuPDF)",
-        value=False,
+        value=True,
         key="fast_mode_toggle",
         help=(
             "**Fast Mode:** Extracts text in seconds. Best for text-heavy documents.\n\n"
