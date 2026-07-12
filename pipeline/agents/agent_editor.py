@@ -6,6 +6,57 @@ from datetime import datetime
 from pipeline.agents.llm_client import generate_text
 from pipeline.models.schemas import FactSheet
 
+# ---------------------------------------------------------------------------
+# Deterministic hallucination scrubber
+# The LLM sometimes ignores prompt-level rules and invents revenue/market
+# figures (e.g. "¥30 trillion"). We catch these with regex AFTER the LLM
+# writes, so they can never reach the final document.
+# ---------------------------------------------------------------------------
+_HALLUCINATION_PATTERNS = [
+    # Any sentence containing a currency amount followed by "trillion"
+    # e.g. "¥30 trillion", "$30 trillion", "USD 30 trillion"
+    r"[^.!?\n]*?[¥$€£₹]\s*\d+[\d,.]*\s*trillion[^.!?\n]*[.!?]?",
+    # Pattern without leading currency symbol: "30 trillion yen/dollars"
+    r"[^.!?\n]*?\b\d+[\d,.]*\s*trillion\s+(?:yen|dollars?|euros?|yuan|rupees?)[^.!?\n]*[.!?]?",
+    # Exhibit lines containing fabricated revenue (e.g. "Revenue: ¥30 trillion")
+    r"(?i)[^\n]*revenue[^\n]*[¥$€£₹]\s*\d+[\d,.]*\s*trillion[^\n]*",
+    # "projected/target revenue of ¥X trillion"
+    r"(?i)[^.!?\n]*(?:projected|target|aimed)\s+(?:a\s+)?revenue[^.!?\n]*trillion[^.!?\n]*[.!?]?",
+]
+_HALLUCINATION_RE = re.compile(
+    "|".join(f"(?:{p})" for p in _HALLUCINATION_PATTERNS),
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
+    """Remove sentences that contain fabricated financial figures.
+
+    We ONLY scrub revenue/market-size figures that are NOT present in the
+    FactSheet's revenue field or raw_facts. This avoids stripping legitimate
+    data that the source actually provided.
+    """
+    # Build a set of whitelisted numeric strings that DO appear in the FactSheet
+    whitelisted: set[str] = set()
+    if fact_sheet.revenue:
+        # Extract all digit sequences from the revenue field
+        whitelisted.update(re.findall(r"[\d,.]+", fact_sheet.revenue))
+    for rf in (fact_sheet.raw_facts or []):
+        whitelisted.update(re.findall(r"[\d,.]+", rf))
+
+    def _should_remove(match: re.Match) -> str:
+        matched_nums = re.findall(r"[\d,.]+", match.group())
+        # Keep the sentence only if every number in it appears in a source fact
+        if all(n in whitelisted for n in matched_nums):
+            return match.group()  # legitimate — keep it
+        print(f"[Agent 4] 🛡️ Scrubbed hallucinated figure: {match.group()[:120]!r}")
+        return ""  # fabricated — remove it
+
+    scrubbed = _HALLUCINATION_RE.sub(_should_remove, text)
+    # Clean up any double blank lines left behind
+    scrubbed = re.sub(r"\n{3,}", "\n\n", scrubbed)
+    return scrubbed
+
 _SECTION_ORDER = [
     ("background", "Company Background"),
     ("industry_context", "Industry Context"),
@@ -119,13 +170,13 @@ def _build_references(
         is_url = source.startswith("http://") or source.startswith("https://")
         if is_url:
             if "ifqm" in fmt:
-                lines.append(f"{i}. {name} ({year}). Retrieved from {source}")
+                lines.append(f"{i}. {name} ({year}). Retrieved from [{source}]({source})")
             elif "mla" in fmt:
-                lines.append(f"{i}. {name}. *Web*. {year}. {source}")
+                lines.append(f"{i}. {name}. *Web*. {year}. [{source}]({source})")
             elif "chicago" in fmt:
-                lines.append(f"{i}. {name}. {year}. {source}.")
+                lines.append(f"{i}. {name}. {year}. [{source}]({source}).")
             else:  # APA default
-                lines.append(f"{i}. {name}. ({year}). Retrieved from {source}")
+                lines.append(f"{i}. {name}. ({year}). Retrieved from [{source}]({source})")
         else:
             if "ifqm" in fmt:
                 lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
@@ -193,6 +244,9 @@ DRAFT DOCUMENT:
     except Exception as e:
         print(f"[Agent 4] LLM edit failed ({e}), using unedited merge")
         edited = merged
+
+    # --- Deterministic hallucination scrub (runs regardless of LLM behaviour) ---
+    edited = _scrub_hallucinations(edited, fact_sheet)
 
     refs = _build_references(
         master_transcript,
