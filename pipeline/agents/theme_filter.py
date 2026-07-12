@@ -12,7 +12,8 @@ containing ONLY facts relevant to theme "{theme}".
 Rules:
 - Always keep company_name, founding_year, industry, headquarters (if present).
 - Keep revenue only if relevant to the theme or essential context.
-- Filter challenges, interventions, outcomes, timeline_events, key_quotes, raw_facts, tagged_facts
+- ALWAYS keep all raw_facts. Quantitative data is foundational context regardless of the theme.
+- Filter challenges, interventions, outcomes, timeline_events, key_quotes, tagged_facts
   to those supporting theme "{theme}".
 - Keep key_quotes that support the theme narrative.
 - Set themes to a single-item list: ["{theme}"].
@@ -52,7 +53,7 @@ def _rule_based_filter(fact_sheet: FactSheet, theme: str) -> FactSheet:
     data["challenges"] = [c for c in data.get("challenges", []) if matches(c)]
     data["interventions"] = [i for i in data.get("interventions", []) if matches(i)]
     data["outcomes"] = [o for o in data.get("outcomes", []) if matches(o)]
-    data["raw_facts"] = [f for f in data.get("raw_facts", []) if matches(f)]
+    data["raw_facts"] = data.get("raw_facts", [])  # Always keep all raw facts
     data["tagged_facts"] = [
         t for t in data.get("tagged_facts", [])
         if any(matches(tag) for tag in t.get("theme_tags", [])) or matches(t.get("fact", ""))
