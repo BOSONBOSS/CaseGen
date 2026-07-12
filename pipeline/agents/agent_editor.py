@@ -19,9 +19,9 @@ _HALLUCINATION_PATTERNS = [
     # Pattern without leading currency symbol: "30 trillion yen/dollars"
     r"[^.!?\n]*?\b\d+[\d,.]*\s*trillion\s+(?:yen|dollars?|euros?|yuan|rupees?)[^.!?\n]*[.!?]?",
     # Exhibit lines containing fabricated revenue (e.g. "Revenue: ¥30 trillion")
-    r"(?i)[^\n]*revenue[^\n]*[¥$€£₹]\s*\d+[\d,.]*\s*trillion[^\n]*",
+    r"[^\n]*revenue[^\n]*[¥$€£₹]\s*\d+[\d,.]*\s*trillion[^\n]*",
     # "projected/target revenue of ¥X trillion"
-    r"(?i)[^.!?\n]*(?:projected|target|aimed)\s+(?:a\s+)?revenue[^.!?\n]*trillion[^.!?\n]*[.!?]?",
+    r"[^.!?\n]*(?:projected|target|aimed)\s+(?:a\s+)?revenue[^.!?\n]*trillion[^.!?\n]*[.!?]?",
 ]
 _HALLUCINATION_RE = re.compile(
     "|".join(f"(?:{p})" for p in _HALLUCINATION_PATTERNS),
@@ -32,25 +32,32 @@ _HALLUCINATION_RE = re.compile(
 def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
     """Remove sentences that contain fabricated financial figures.
 
-    We ONLY scrub revenue/market-size figures that are NOT present in the
-    FactSheet's revenue field or raw_facts. This avoids stripping legitimate
-    data that the source actually provided.
+    We build a whitelist of EXACT 'currency+number+unit' tokens that appear
+    in the FactSheet. Only matches whose currency+amount token is on this list
+    are kept. This prevents '30' appearing in raw_facts (e.g. '30 years of
+    HEV experience') from accidentally whitelisting '¥30 trillion'.
     """
-    # Build a set of whitelisted numeric strings that DO appear in the FactSheet
-    whitelisted: set[str] = set()
-    if fact_sheet.revenue:
-        # Extract all digit sequences from the revenue field
-        whitelisted.update(re.findall(r"[\d,.]+", fact_sheet.revenue))
-    for rf in (fact_sheet.raw_facts or []):
-        whitelisted.update(re.findall(r"[\d,.]+", rf))
+    # Build whitelist of currency+amount+unit tokens from the FactSheet
+    # e.g. if revenue = '¥37.4 trillion', we whitelist '¥37.4 trillion'
+    currency_token_re = re.compile(
+        r"[¥$€£₹]\s*[\d,.]+\s*(?:trillion|billion|million|crore)?"
+        r"|\b[\d,.]+\s*(?:trillion|billion|million|crore)\s+(?:yen|dollars?|euros?|yuan|rupees?)",
+        re.IGNORECASE,
+    )
+    whitelisted_tokens: set[str] = set()
+    sources = [fact_sheet.revenue or ""] + (fact_sheet.raw_facts or [])
+    for src in sources:
+        for tok in currency_token_re.findall(src):
+            whitelisted_tokens.add(tok.lower().replace(" ", ""))
 
     def _should_remove(match: re.Match) -> str:
-        matched_nums = re.findall(r"[\d,.]+", match.group())
-        # Keep the sentence only if every number in it appears in a source fact
-        if all(n in whitelisted for n in matched_nums):
-            return match.group()  # legitimate — keep it
-        print(f"[Agent 4] 🛡️ Scrubbed hallucinated figure: {match.group()[:120]!r}")
-        return ""  # fabricated — remove it
+        matched_tokens = currency_token_re.findall(match.group())
+        for tok in matched_tokens:
+            normalised = tok.lower().replace(" ", "")
+            if normalised not in whitelisted_tokens:
+                print(f"[Agent 4] 🛡️ Scrubbed hallucinated figure: {match.group()[:120]!r}")
+                return ""  # fabricated — remove it
+        return match.group()  # every token is sourced — keep it
 
     scrubbed = _HALLUCINATION_RE.sub(_should_remove, text)
     # Clean up any double blank lines left behind

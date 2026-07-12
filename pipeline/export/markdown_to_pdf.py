@@ -50,6 +50,12 @@ def _markdown_to_html(markdown: str) -> str:
             html_parts.append(f"<blockquote><em>{raw}</em></blockquote>")
         elif line.strip():
             text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
+            # Convert markdown links [label](url) → <a href="url">label</a>
+            text = re.sub(
+                r"\[([^\]]+)\]\((https?://[^)]+)\)",
+                r'<a href="\2" style="word-break:break-all;overflow-wrap:anywhere;">\1</a>',
+                text,
+            )
             html_parts.append(f"<p>{text}</p>")
 
     if in_table:
@@ -64,6 +70,7 @@ body {{ font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-heig
 h1 {{ font-size: 18pt; }} h2 {{ font-size: 14pt; margin-top: 18px; }} h3 {{ font-size: 12pt; }}
 table {{ font-size: 11pt; }}
 blockquote {{ border-left: 3px solid #555; margin: 12px 0 12px 20px; padding: 4px 12px; font-style: italic; color: #333; }}
+a {{ word-break: break-all; overflow-wrap: anywhere; color: #1a0dab; }}
 </style></head><body>{body}</body></html>"""
 
 
