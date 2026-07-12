@@ -57,11 +57,11 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 st.sidebar.divider()
 st.sidebar.markdown("**Step 2 of 5** — Configure")
-st.sidebar.caption("Set the scope, tone, and audience before the AI pipeline begins.")
+st.sidebar.caption("Set the scope, tone and audience before the AI pipeline begins.")
 
 # ── Page Header ───────────────────────────────────────────────────────────────
 st.markdown('<div class="page-title">Configure Your Case Study</div>', unsafe_allow_html=True)
-st.markdown('<div class="page-desc">These settings control how the AI writes your case study. Every choice here is routed to the correct agent.</div>', unsafe_allow_html=True)
+st.markdown('<div class="page-desc">These settings control how the AI writes your case study.</div>', unsafe_allow_html=True)
 
 # ── Guard: warn if no transcript uploaded ─────────────────────────────────────
 _transcript = st.session_state.get("master_transcript")
@@ -164,7 +164,7 @@ with col_back:
         st.switch_page("pages/1_Upload_Documents.py")
 
 with col_next:
-    if st.button("Next: Select Theme", type="primary", use_container_width=True):
+    if st.button("Select Theme", type="primary", use_container_width=True):
 
         # 1. Save all UI config to session state
         st.session_state["ui_config"] = {
