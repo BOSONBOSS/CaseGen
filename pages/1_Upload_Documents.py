@@ -91,7 +91,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 with st.container(border=True):
     st.markdown('<div class="section-label">Web Article or PDF URL</div>', unsafe_allow_html=True)
-    url = st.text_input("url", placeholder="https://", label_visibility="collapsed")
+    urls = st.text_area("urls", placeholder="Paste one or more URLs here (one per line)", label_visibility="collapsed", height=68)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -103,7 +103,7 @@ if "extract_warnings" not in st.session_state:
 extract_clicked = st.button("Extract and merge all sources", type="primary", use_container_width=True)
 
 if extract_clicked:
-    if not docs and not audio and not url:
+    if not docs and not audio and not urls.strip():
         st.warning("Add at least one file or URL before extracting.")
     else:
         os.makedirs("session_backup", exist_ok=True)
@@ -140,17 +140,19 @@ if extract_clicked:
                     except Exception as e:
                         status[file.name] = {"ok": False, "error": str(e)}
 
-            if url and url.strip():
-                try:
-                    st.toast("Extracting web content...")
-                    text, web_warning = parse_url(url.strip())
-                    key = url.strip()[:80]
-                    master_transcript[key] = text
-                    status[key] = {"ok": True, "chars": len(text)}
-                    if web_warning:
-                        warnings.append(web_warning)
-                except Exception as e:
-                    status[url.strip()[:80]] = {"ok": False, "error": str(e)}
+            if urls and urls.strip():
+                url_list = [u.strip() for u in urls.split() if u.strip().startswith("http")]
+                for u in url_list:
+                    try:
+                        st.toast(f"Extracting {u[:40]}...")
+                        text, web_warning = parse_url(u)
+                        key = u[:80]
+                        master_transcript[key] = text
+                        status[key] = {"ok": True, "chars": len(text)}
+                        if web_warning:
+                            warnings.append(web_warning)
+                    except Exception as e:
+                        status[u[:80]] = {"ok": False, "error": str(e)}
 
             combined = " ".join(master_transcript.values())
             junk_warning = detect_homepage_junk(combined)
