@@ -19,14 +19,14 @@ than to miss a fact. Each field below MUST be populated if the text supports it.
 
 EXTRACTION RULES:
 1. company_name: Look in title, header, "About Us", Chairman's message.
-2. revenue: Look ONLY for TOTAL company revenue, turnover, or total sales. Do NOT extract operating income, profit, or revenue for a single business division/segment. Include currency symbol, unit (crore/million/billion/%), and year. If multiple figures exist, put the total company figure here.
+2. revenue: Look ONLY for TOTAL company financial revenue, turnover, or total sales expressed in currency (e.g. ¥ trillion, $ billion, ₹ crore). Do NOT extract operating income, profit, or revenue for a single business division/segment. Include currency symbol, unit (crore/million/billion/%), and year. If multiple figures exist, put the total company figure here. CRITICAL: Do NOT confuse unit sales volume (number of vehicles, products, or units sold) with financial revenue. If the text only provides sales in units (e.g. '10.3 million vehicles sold'), leave revenue as null — that is a production/sales count, NOT a financial figure.
 3. raw_facts: List EVERY numerical or quantitative fact you can find — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. Include the context for each number (e.g. "200 fuel-cell electric trucks operational as of December 2025"). Do NOT skip any number.
 4. timeline_events: List EVERY dated event, milestone, product launch, policy change, or achievement mentioned. Each entry must have a year (even approximate like "2023") and a clear description.
 5. challenges: List every problem, obstacle, difficulty, or risk mentioned — operational, financial, regulatory, competitive, or strategic.
 6. interventions: List every initiative, programme, investment, technology, process, or strategic change the company took in response to challenges.
 7. outcomes: List every measurable or stated result, achievement, improvement, or outcome — including production milestones, market performance, and financial results.
 8. key_quotes: Extract ALL direct quotes (text inside quotation marks) from leadership, employees, or official statements. Include the full quote text and speaker name with title.
-9. key_people: All named leaders/executives with their exact title.
+9. key_people: All CURRENT, named leaders/executives with their exact title. Only include people who are currently active at the company. Do NOT list historical figures, founders who passed away, or people who are no longer employed at the company. If a person is mentioned purely in a historical context (e.g. the creator of a business system who is no longer alive), exclude them.
 10. themes: Up to 5 STRATEGIC topics reflected in this text.
 11. tagged_facts: For EVERY fact in raw_facts, challenges, interventions, and outcomes, create a tagged_facts entry linking that fact to a theme.
 12. strategic_initiatives: List EVERY named programme, brand launch, technology bet, or major strategic project (e.g. "Woven City", "ENGINE ReBORN", "bZ3X BEV launch"). Include its name, a rich description with all available details, and approximate year.
@@ -103,7 +103,7 @@ SYNTHESISE them into ONE coherent, deduplicated FactSheet.
 Rules:
 - company_name: most complete official legal name.
 - Deduplicate lists semantically; keep most specific wording.
-- themes: exactly 3-5 distinct STRATEGIC themes for the user to pick from.
+- themes: You MUST output exactly 3-5 distinct STRATEGIC themes. Review all themes from the partial extractions and synthesise the best 3-5 that represent the most important strategic storylines across the whole document. Do NOT return null, do NOT return an empty list, do NOT omit this field. If partials have conflicting or overlapping themes, consolidate them intelligently into 3-5 clean strategic themes. This field is critical for the user interface.
 - tagged_facts: merge and tag facts with relevant theme_tags.
 - CRITICAL — do NOT discard or empty any of these fields during deduplication:
   timeline_events, challenges, interventions, outcomes, key_quotes, raw_facts,
@@ -172,6 +172,17 @@ def _synthesise(partials: list[dict]) -> dict:
     try:
         result = generate_json(prompt)
         if result:
+            # Safety net: if synthesis dropped themes, harvest them from partials
+            if not result.get("themes"):
+                all_themes = []
+                seen = set()
+                for p in valid:
+                    for t in p.get("themes", []):
+                        if t and t not in seen:
+                            all_themes.append(t)
+                            seen.add(t)
+                result["themes"] = all_themes[:5] if all_themes else ["General Business Analysis"]
+                print(f"[Agent 1] Synthesis dropped themes — harvested {len(result['themes'])} from partials")
             print("[Agent 1] Synthesis OK")
             return result
     except Exception as e:
@@ -236,11 +247,23 @@ def _heuristic_merge(partials: list[dict]) -> dict:
     return merged
 
 
-def _normalise_for_validation(merged: dict) -> dict:
+def _normalise_for_validation(merged: dict, partials: list[dict] = None) -> dict:
     if not merged.get("company_name"):
         merged["company_name"] = "Unknown Company"
+
+    # Themes: if synthesis returned null/empty, harvest from partials then fall back
     if not merged.get("themes"):
-        merged["themes"] = ["General Business Analysis"]
+        if partials:
+            all_themes = []
+            seen = set()
+            for p in (partials or []):
+                for t in p.get("themes", []):
+                    if t and t not in seen:
+                        all_themes.append(t)
+                        seen.add(t)
+            merged["themes"] = all_themes[:5] if all_themes else ["General Business Analysis"]
+        else:
+            merged["themes"] = ["General Business Analysis"]
 
     list_fields = (
         "key_people", "timeline_events", "challenges", "interventions",
@@ -274,8 +297,8 @@ def _normalise_for_validation(merged: dict) -> dict:
     return merged
 
 
-def _validate_with_retry(merged: dict, max_retries: int = 3) -> FactSheet:
-    data = _normalise_for_validation(dict(merged))
+def _validate_with_retry(merged: dict, partials: list[dict] = None, max_retries: int = 3) -> FactSheet:
+    data = _normalise_for_validation(dict(merged), partials=partials)
     last_error = ""
 
     for attempt in range(max_retries):
@@ -338,4 +361,4 @@ def run_agent_1(
     merged = _synthesise(partials)
 
     print(f"[Agent 1] Result: company={merged.get('company_name')!r}, themes={merged.get('themes')}")
-    return _validate_with_retry(merged)
+    return _validate_with_retry(merged, partials=partials)
