@@ -63,6 +63,7 @@ GENTLE NARRATIVE GUIDELINES (CRITICAL):
 4. Causal Mechanisms (Results section): When describing outcomes, explicitly explain the specific mechanism of HOW the intervention led to the result (don't just state the correlation).
 5. Synthesis (Learnings section): Conclude with a final synthesis paragraph that reconnects to the opening thesis, placed immediately before any discussion questions.
 6. Quote Integrity: The opening quote MUST be taken verbatim from the key_quotes field in the FactSheet. Do NOT paraphrase, adapt, or invent any quote.
+7. MUTUAL EXCLUSIVITY: Do not repeat the same facts, initiatives, or historical context across multiple sections. If an initiative or target is detailed in the Background or Industry Context, do not re-explain it in the Challenge or Interventions sections. You may reference it briefly if structurally necessary, but each section must primarily introduce new information.
 
 Template sections (minimum word targets — there is NO maximum; write as much as the data warrants):
 {sections_block}

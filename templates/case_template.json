@@ -31,7 +31,7 @@
       "word_count_min": 800,
       "word_count_max": 1500,
       "must_include": [
-        "Specific problem description",
+        "Specific problem description, framed as a structural paradox or strategic dilemma rather than a simple operational difficulty",
         "Timeline of the problem's emergence",
         "Quantitative evidence (e.g., sales drop, quality defects, turnover rate)",
         "Impact on stakeholders (customers, employees, shareholders)"
