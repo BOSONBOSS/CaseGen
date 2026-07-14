@@ -56,7 +56,7 @@ def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
         for tok in matched_tokens:
             normalised = tok.lower().replace(" ", "")
             if normalised not in whitelisted_tokens:
-                print(f"[Agent 4] 🛡️ Scrubbed hallucinated figure: {match.group()[:120]!r}")
+                print(f"[Agent 4] [SCRUB] Scrubbed hallucinated figure: {match.group()[:120]!r}")
                 return ""  # fabricated — remove it
         return match.group()  # every token is sourced — keep it
 

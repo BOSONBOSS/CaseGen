@@ -118,9 +118,9 @@ def generate_text(
     exhausted_key = "OPENROUTER_API_KEY" if LLM_PROVIDER == "openrouter" else "GEMINI_API_KEY"
     
     print("\n" + "="*80)
-    print(f"🚨 API KEY EXHAUSTED: Your {exhausted_key} has failed or run out of credits!")
-    print(f"🚨 ACTION REQUIRED: Please replace {exhausted_key} in your .env file.")
-    print(f"🔄 Attempting automatic fallback to {fallback_provider} backup key to save this run...")
+    print(f"[WARNING] API KEY EXHAUSTED: Your {exhausted_key} has failed or run out of credits!")
+    print(f"[ACTION REQUIRED] Please replace {exhausted_key} in your .env file.")
+    print(f"[SYSTEM] Attempting automatic fallback to {fallback_provider} backup key to save this run...")
     print("="*80 + "\n")
     
     try:
@@ -143,12 +143,12 @@ def generate_text(
              raise ValueError(f"Missing API key for fallback provider: {fallback_provider}")
              
         if text and text.strip():
-            print(f"[LLM] ✅ Fallback to {fallback_provider} successful!")
+            print(f"[LLM] [SUCCESS] Fallback to {fallback_provider} successful!")
             return text.strip()
     except Exception as fallback_e:
          print("\n" + "="*80)
-         print(f"❌ FATAL ERROR: Both your primary and backup API keys are exhausted!")
-         print(f"Please check BOTH OPENROUTER_API_KEY and GEMINI_API_KEY in your .env file.")
+         print(f"[FATAL ERROR] Both your primary and backup API keys are exhausted!")
+         print(f"[ACTION REQUIRED] Please check BOTH OPENROUTER_API_KEY and GEMINI_API_KEY in your .env file.")
          print("="*80 + "\n")
          raise RuntimeError(f"Both primary ({LLM_PROVIDER}) and fallback ({fallback_provider}) failed. Last error: {fallback_e}")
 
