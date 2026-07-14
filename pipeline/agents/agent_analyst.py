@@ -16,6 +16,7 @@ EXHIBIT RULES:
 - DO NOT generate purely qualitative exhibits (no Quotes, no generic Key People lists).
 - TEMPORAL METADATA RULE (CRITICAL): If a raw fact includes a time qualifier (e.g. "Q1", "Jan–May 2026", "YTD", "Cumulative", "FY2025"), that qualifier MUST appear verbatim in the "Context" or "Period" column of the table. Never strip or omit the time period from any data point.
 - DATA PRECISION RULE: Copy all numbers exactly as they appear in raw_facts. Never round, abbreviate, or convert units (e.g. write 10,823,000 not ~10.8M).
+- SEGMENT SCOPE RULE (CRITICAL): If a raw fact is scoped to a segment, brand, region, or country (e.g. "electrified vehicles", "Lexus", "Vietnam"), that scope MUST appear in the Metric or Context column. NEVER present a segment/country figure or growth rate as a company-wide total.
 {privacy_rule}
 {brevity_rule}
 
