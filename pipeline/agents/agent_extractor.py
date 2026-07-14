@@ -346,7 +346,7 @@ def _validate_with_retry(merged: dict, partials: list[dict] = None, max_retries:
 
 def run_agent_1(
     chunks: list[str],
-    batch_size: int = 12,
+    batch_size: int = 10,
     on_progress: Optional[Callable[[int, int], None]] = None,
 ) -> FactSheet:
     """
