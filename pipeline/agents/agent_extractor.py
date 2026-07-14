@@ -4,6 +4,7 @@ Two-pass: batch extraction → synthesis → Pydantic validation with LLM retry.
 """
 
 import json
+import concurrent.futures
 from typing import Callable, Optional
 
 from pydantic import ValidationError
@@ -360,13 +361,25 @@ def run_agent_1(
     print(f"[Agent 1] Pass 1: {total} chunks → {total_batches} batches")
 
     partials = []
+    batches_to_run = []
     for i in range(0, total, batch_size):
         batch = chunks[i: i + batch_size]
         batch_num = (i // batch_size) + 1
-        result = _process_batch(batch, batch_num)
-        partials.append(result)
-        if on_progress:
-            on_progress(batch_num, total_batches)
+        batches_to_run.append((batch, batch_num))
+
+    completed_count = 0
+    # Use max_workers=3 as a strict speed limit to prevent 429 Too Many Requests errors
+    # on free API tiers. This still cuts total wait time by ~66% vs sequential processing.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(_process_batch, b, num): num for b, num in batches_to_run}
+        
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            partials.append(result)
+            completed_count += 1
+            if on_progress:
+                on_progress(completed_count, total_batches)
+                
     non_empty = sum(1 for p in partials if p)  # count batches that returned actual data
     print(f"[Agent 1] Pass 1 complete: {non_empty}/{total_batches} batches returned data")
 
