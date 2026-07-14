@@ -27,7 +27,8 @@ Generate exhibits in this priority order (include ALL for which data exists):
    Columns: Metric | Value | Period | Context.
 
 2. **Sales, Production & Product Breakdown**: All unit sales, production volumes, market share, and deployment figures.
-   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available), regional breakdowns, and year-on-year comparisons (YoY % growth) if available.
+   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available) and regional breakdowns.
+   YoY COLUMN RULE (CRITICAL): If you have figures for more than one year or period, you MUST calculate and fill the YoY percentage change yourself (formula: (new - old) / old × 100). Do NOT leave this column blank. If only one period exists, write "Baseline" in that cell.
    Columns: Metric/Segment | Units/Value | Period | YoY Change / Context.
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
@@ -42,10 +43,10 @@ Generate exhibits in this priority order (include ALL for which data exists):
 6. **Cost / Process Breakdown**: If there is data about operational efficiency, cost reductions, supply chain metrics, or process improvements.
    Columns: Process/Area | Metric | Improvement/Impact | Period.
 
-7. **Strategic Investments & Targets**: Any data on investments, budget allocations, or quantifiable sustainability/technology targets (e.g., GHG reduction targets, sales targets).
+7. **Strategic Investments & Targets**: MANDATORY if the FactSheet contains ANY strategic targets, GHG reduction commitments, technology goals, or investment figures. Do NOT skip this exhibit if such data exists — even partial data warrants inclusion.
    Columns: Area/Initiative | Target/Investment | Deadline/Impact.
 
-8. **Key Partnerships & Collaborations**: Any joint ventures, municipal agreements, or corporate partnerships. Include as many specific partner names and collaboration details as available.
+8. **Key Partnerships & Collaborations**: MANDATORY if the FactSheet contains ANY entries in key_partnerships. Include every partner by name with their collaboration area and a specific description. Do not summarize multiple partners into one generic row.
    Columns: Partner | Area of Collaboration | Description/Details.
 
 Format all exhibits as:
