@@ -61,7 +61,7 @@ def _classify_source(filename: str) -> str:
     )
 
 
-def chunk_master_transcript(master_transcript, chunk_size=2000, chunk_overlap=300):
+def chunk_master_transcript(master_transcript, chunk_size=4000, chunk_overlap=400):
     """
     Splits the master transcript into overlapping chunks for LLM processing.
 
