@@ -346,11 +346,14 @@ TONE AND VOICE RULES:
 10. Use EXACT TERMINOLOGY from the FactSheet: "multi-pathway strategy", "monozukuri",
     "genba", "kaizen", "region-centered management" — never paraphrase into generic terms.
 11. Use PRECISE powertrain terminology: BEV, PHEV, HEV, FCEV — never the generic "EV."
-12. CRITICAL DATA RULE: Aggressively weave ALL numerical figures, percentages, dates, and
-    quantitative metrics from the FactSheet into prose. Never write purely qualitative prose
-    when numbers are available in raw_facts, outcomes, or tagged_facts.
+12. CRITICAL DATA RULE: Every paragraph MUST contain at least one specific number, percentage,
+    date, or quantitative metric from the FactSheet. NEVER write a paragraph of purely qualitative
+    prose when numbers are available. If the FactSheet has 10 numbers, use all 10 in the text.
+    Do NOT save numbers only for exhibits — weave them directly into sentences.
 13. NAMED INITIATIVES RULE: strategic_initiatives in the FactSheet are named programmes —
     write substantively about each. key_partnerships are named external partners — name them.
+14. EM-DASH BAN: Do NOT use em-dashes (—) anywhere in your output. Use a comma, a colon,
+    or a new sentence instead. This is a hard formatting rule.
 
 {exhibit_ref_rule}
 
