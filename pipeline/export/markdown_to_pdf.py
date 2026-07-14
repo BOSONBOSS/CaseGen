@@ -68,7 +68,8 @@ def _markdown_to_html(markdown: str) -> str:
 @page {{ margin: 1in; }}
 body {{ font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; }}
 h1 {{ font-size: 18pt; }} h2 {{ font-size: 14pt; margin-top: 18px; }} h3 {{ font-size: 12pt; }}
-table {{ font-size: 11pt; }}
+table {{ font-size: 11pt; page-break-inside: avoid; }}
+tr {{ page-break-inside: avoid; page-break-after: auto; }}
 blockquote {{ border-left: 3px solid #555; margin: 12px 0 12px 20px; padding: 4px 12px; font-style: italic; color: #333; }}
 a {{ word-break: break-all; overflow-wrap: anywhere; color: #1a0dab; }}
 </style></head><body>{body}</body></html>"""
