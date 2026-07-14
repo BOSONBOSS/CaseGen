@@ -66,7 +66,7 @@ if "fact_sheet" not in st.session_state:
         progress_bar.progress(pct, text=f"Agent 1: batch {batch_num}/{total_batches}")
 
     try:
-        progress_text.markdown("**Agent 1** is reading your documents. This may take longer for large annual reports...")
+        progress_text.markdown("**Agent 1** is reading your documents. This may take a while...")
         fact_sheet = run_agent_1(chunks, on_progress=on_progress)
         progress_bar.progress(100, text="Done!")
         progress_text.empty()
