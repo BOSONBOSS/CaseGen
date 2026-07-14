@@ -156,8 +156,10 @@ Do NOT invent exhibit numbers. Only reference exhibits from this list:
 
     # ── Section-specific narrative architecture rules ──────────────────────────
     narrative_rules = {
-        "background": """
+        "background": f"""
 NARRATIVE ARCHITECTURE — COMPANY BACKGROUND:
+Purpose of this case study: {ui_config.get('purpose', 'General')} | Tone required: {ui_config.get('tone', 'Neutral')} | Audience: {ui_config.get('audience', 'General')}
+
 Your job is to open the entire case study with a powerful, memorable hook. This is the first thing
 the reader sees; it must immediately establish the dramatic stakes.
 
@@ -166,20 +168,30 @@ the reader sees; it must immediately establish the dramatic stakes.
      open with a boring "Company X was founded in year Y" sentence. The hook must create
      intellectual tension: why does this company matter RIGHT NOW?
 
-  b) THESIS STATEMENT: In the second paragraph, state the central argument of this entire case
-     study in 1-2 sentences. This thesis must be specific and arguable — not generic. It should
-     name the company's core strategic challenge and its chosen response. Example of a STRONG
-     thesis: "Toyota's response to the global energy transition — a deliberate multi-pathway
-     strategy spanning BEVs, FCEVs, and HEVs — reflects a conviction that no single technology
-     can serve all markets equally, a bet that sets it apart from every major competitor."
-     Example of a WEAK thesis: "Toyota faces challenges in a changing market." The thesis must
-     be woven as a theme that every subsequent section refers back to.
+  b) THESIS STATEMENT (CRITICAL): In the second paragraph, state the central argument of this
+     entire case study in 1-2 sentences. This thesis MUST be:
+     - Specific and arguable, not generic
+     - Calibrated to the Tone above (e.g. if Tone is 'Critical', the thesis should interrogate
+       the strategy; if 'Analytical', it should frame a testable hypothesis)
+     - Calibrated to the Purpose above (e.g. if Purpose is 'Investor Memo', the thesis frames
+       financial risk/opportunity; if 'Teaching Case', it frames the core management dilemma)
+     EXAMPLE OF A STRONG THESIS: "Toyota's multi-pathway strategy spanning BEVs, FCEVs, and HEVs
+     reflects a conviction that no single technology can serve all markets equally — a bet that
+     sets it apart from every major competitor, but one whose long-term viability depends on
+     whether governments and consumers align with Toyota's timeline."
+     EXAMPLE OF A WEAK THESIS (BANNED): "Toyota faces challenges in a changing market."
+     The thesis must be woven as a recurring theme that every subsequent section refers back to.
 
-  c) COMPANY PORTRAIT: After the hook and thesis, provide a rich portrait of the company —
+  c) ANTI-META BAN (CRITICAL): NEVER use the following phrases or anything like them:
+     "This case study will explore...", "In this report, we will...", "As we will see...",
+     "This paper examines...", "The following sections detail...", "We will analyze..."
+     These are journalistic crutches. A great case study SHOWS its argument, it never announces it.
+
+  d) COMPANY PORTRAIT: After the hook and thesis, provide a rich portrait of the company —
      its founding, scale, culture, and strategic identity — using ONLY data from the FactSheet.
      Integrate all key_people, timeline_events, and strategic_initiatives mentioned.
 
-  d) DO NOT use a generic "founded in X" opening line. The hook comes first.
+  e) DO NOT use a generic "founded in X" opening line. The hook comes first.
 """,
 
         "industry_context": """
@@ -234,7 +246,8 @@ WHY that specific approach was chosen, and HOW it was executed.
 
   b) NAMED PROTAGONISTS: Every major initiative must be attributed to a named decision-maker
      from the FactSheet's key_people. Do not write "the company decided" — write "President
-     Koji Sato directed..." or "Chairman Akio Toyoda championed...".
+     Koji Sato directed..." or "Chairman Akio Toyoda championed...". If no named individual
+     is in the FactSheet for a decision, attribute it to the specific team or function.
 
   c) INITIATIVE DEEP-DIVES: For each strategic initiative (especially those in
      strategic_initiatives), write a dedicated sub-section that explains:
@@ -244,9 +257,16 @@ WHY that specific approach was chosen, and HOW it was executed.
      - What makes it distinctive or innovative
      - Key partnerships or collaborations involved (name all partners from key_partnerships)
 
-  d) CAUSAL LINKAGE: At the end of each initiative description, explicitly link it to a specific
-     expected or achieved outcome. "By investing in X, Toyota expected/achieved Y because Z."
-     This causal chain is what separates analysis from a press release.
+  d) CAUSAL EVIDENCE MANDATE (CRITICAL): At the end of EACH initiative description, you MUST
+     explicitly state the causal mechanism linking that initiative to its outcome. The structure
+     MUST follow this logic: "By doing [X], the company achieved [Y] BECAUSE [Z mechanism]."
+     BANNED: "This initiative improved results." (no mechanism)
+     BANNED: "The strategy led to growth." (no specifics)
+     REQUIRED: "By co-developing the bZ3X platform exclusively for the Chinese market with GAC
+     and FAW, Toyota captured a price point previously inaccessible to its global lineup,
+     which directly drove a 15% increase in its China BEV market share in 2024."
+     If the FactSheet does NOT provide a causal link between an initiative and an outcome,
+     state the initiative and its intended goal separately. DO NOT invent causation.
 """,
 
         "results": """
@@ -254,12 +274,21 @@ NARRATIVE ARCHITECTURE — RESULTS & IMPACT:
 Show don't tell. This section must be data-dense and analytically rich.
 
   a) QUANTITATIVE WINS: Lead with the hardest, most specific numbers from raw_facts and
-     outcomes. Use before-vs-after structure where the FactSheet provides it.
+     outcomes. Use before-vs-after structure where the FactSheet provides it. Every result
+     MUST include the year or time period it belongs to.
 
-  b) CAUSAL ATTRIBUTION: Do not just list outcomes — explain WHY each result happened.
-     "BEV sales in China exceeded 50% of total sales because the bZ3X became the top-selling
-     BEV among all joint-venture brands — a direct result of the decision to develop a China-
-     specific platform with GAC and FAW."
+  b) CAUSAL ATTRIBUTION (CRITICAL): Do NOT list outcomes in isolation. For EVERY result,
+     you MUST answer "why did this happen?" using this structure:
+     "[Outcome] happened because [specific intervention or mechanism] which worked by [how]."
+     BANNED: "Sales grew 12% in 2024." (no cause)
+     BANNED: "The company saw improved profitability." (no mechanism)
+     REQUIRED: "Electrified vehicle sales reached 3.86 million units in 2024, a 19% increase
+     year-on-year, driven by the ramp-up of the TNGA platform's shared hybrid components
+     across 14 models simultaneously, which compressed per-unit battery costs by allowing
+     volume procurement across a unified powertrain architecture."
+     If the FactSheet does not explain WHY an outcome occurred, present the result with its
+     number and year, then note the strategic action that preceded it — without inventing
+     a causal link that is not in the data.
 
   c) BROADER IMPACT: Address impact on multiple stakeholders — customers, employees,
      investors, communities, environment — using only FactSheet data.
@@ -269,36 +298,53 @@ Show don't tell. This section must be data-dense and analytically rich.
      Do not write a pure success story if the data shows nuance.
 """,
 
-        "learnings": """
+        "learnings": f"""
 NARRATIVE ARCHITECTURE — LEARNING OUTCOMES:
+Discipline: {ui_config.get('discipline', 'General Business')} | Audience: {ui_config.get('audience', 'General')}
+
 This section must deliver SPECIFIC, ACTIONABLE, COMPANY-SPECIFIC insights — not generic
 management platitudes that could apply to any company in any industry.
 
-  a) COMPANY-SPECIFIC PRINCIPLES: Every learning outcome must be grounded in something
-     SPECIFIC to this company's experience. Do not write "adaptability is important." Write
-     "Toyota's 30-year investment in hybrid technology gave it the manufacturing expertise and
-     supply chain relationships to accelerate BEV development faster than pure-play EV startups
-     — demonstrating that sustained long-term R&D investment creates platform advantages that
-     cannot be replicated quickly by competitors."
+  a) PLATITUDE BAN (CRITICAL): The following generic statements (and anything like them) are
+     STRICTLY FORBIDDEN in this section:
+     - "Adaptability is key."
+     - "Customer engagement is important."
+     - "Innovation drives success."
+     - "Leadership matters."
+     - "Companies must embrace change."
+     - "Sustainability is a priority."
+     If you write any of these, you have FAILED. Every single learning outcome MUST be anchored
+     to a named initiative, a specific number, or a proprietary framework from the FactSheet.
+     At least 3 out of your learning outcomes MUST reference something unique to this company
+     (a named programme, a specific metric, a proprietary process, or a named decision-maker).
 
-  b) CAUSAL EXPLANATIONS: Each learning must explain the mechanism — not just WHAT happened
+  b) COMPANY-SPECIFIC PRINCIPLES: Every learning outcome must be grounded in something
+     SPECIFIC to this company's experience. Instead of "adaptability is important," write:
+     "[Company]'s [specific named initiative] demonstrates that [specific mechanism] creates
+     [specific advantage] — a lesson applicable to any company facing [specific condition]."
+
+  c) CAUSAL EXPLANATIONS: Each learning must explain the mechanism — not just WHAT happened
      but HOW and WHY it worked. Connect each lesson back to the specific interventions and
-     results described in previous sections.
+     results from previous sections.
 
-  c) TRANSFERABLE FRAMEWORK: After the company-specific insights, distil 2-3 principles that
+  d) TRANSFERABLE FRAMEWORK: After the company-specific insights, distil 2-3 principles that
      managers in OTHER industries could apply, explicitly stating what conditions make each
      principle applicable.
 
-  d) OPEN TENSIONS: End with 1-2 unresolved questions that the case raises but does not answer.
-     These become natural discussion prompts. Example: "Whether Toyota's multi-pathway
-     strategy will hold as BEV infrastructure rapidly expands — or whether the company will
-     need to eventually concentrate its resources — remains one of the most consequential
-     strategic questions in the automotive industry."
+  e) OPEN TENSIONS: End with 1-2 unresolved questions that the case raises but does not answer.
+     These should feel genuinely difficult — two legitimate strategic paths that the data does
+     not definitively resolve. Make them company-specific, not generic.
 
-  e) DISCUSSION QUESTIONS: Include 4-6 substantive, open-ended discussion questions at the
-     end that require students to apply analytical frameworks (Porter's Five Forces, resource-
-     based view, etc.) to the case. Questions must be specific to the company's situation —
-     not generic.
+  f) DISCUSSION QUESTIONS: Include 4-6 substantive, open-ended discussion questions calibrated
+     to the Discipline and Audience above. Each question MUST:
+     - Name a specific analytical framework relevant to the Discipline
+       (e.g. Porter's Five Forces, PESTLE, Resource-Based View, SWOT, Blue Ocean Strategy,
+       BCG Matrix, Balanced Scorecard, Triple Bottom Line — choose based on the Discipline)
+     - Be anchored to a specific situation, decision, or data point from the FactSheet
+     - NOT be answerable with a simple yes/no
+     BANNED: "How did the company manage change?"
+     REQUIRED: "Using Porter's Five Forces, assess the bargaining power of battery suppliers
+     over [Company] as it scales its BEV production to [specific target] units by [year]."
 """,
     }
 
