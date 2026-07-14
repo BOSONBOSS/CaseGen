@@ -128,8 +128,14 @@ def _build_row_labels(df: pd.DataFrame, non_year_cols: list, year_cols: dict) ->
             prev_label = full
             labels.append(full)
         else:
+            # Keep the full parent label (e.g. "Vietnam") so the LLM knows WHICH entity
+            # this YoY % belongs to. Without this, "34.97%" from Vietnam's YoY row
+            # gets misread as Toyota's global sales growth.
             base = prev_label or "Previous metric"
-            labels.append(f"{base} (YoY % change vs prior year - values are PERCENTAGES, not units)")
+            labels.append(
+                f"{base} | YoY % change vs prior year "
+                f"(WARNING: values are PERCENTAGES belonging to '{base}', NOT company-wide totals or unit counts)"
+            )
     return labels
 
 
@@ -193,7 +199,16 @@ def _build_year_sections(df: pd.DataFrame, sheet_name: str) -> str:
     """
     df = _promote_header_row(df)
     year_cols = _detect_year_cols(df)
-    non_year_cols = [c for c in df.columns if c not in year_cols]
+
+    # Label columns = only the columns LEFT of the first year column.
+    # Interleaved unnamed data columns (e.g. YoY % helper columns) to the right
+    # would otherwise pollute row labels with raw numbers.
+    cols = list(df.columns)
+    year_positions = [i for i, c in enumerate(cols) if c in year_cols]
+    if year_positions:
+        non_year_cols = [c for i, c in enumerate(cols) if i < min(year_positions)]
+    else:
+        non_year_cols = [c for c in cols if c not in year_cols]
 
     if not year_cols:
         return f"### Sheet: {sheet_name}\n\n{df.head(MAX_ROWS).to_markdown(index=False)}"
@@ -231,6 +246,12 @@ def _build_year_sections(df: pd.DataFrame, sheet_name: str) -> str:
             " Only full-year totals and the official cumulative total are shown."
             " NEVER sum monthly or quarterly figures to create a new total."
         )
+    header += (
+        f"\n> SCOPE RULE: Every figure below belongs to the scope '{sheet_name}'."
+        f" NEVER attribute a figure from this sheet to a different scope (e.g. a segment"
+        f" figure such as electrified vehicles, Lexus, or a single country must NEVER be"
+        f" presented as a company-wide or worldwide total)."
+    )
     parts.append(header)
 
     row_labels = _build_row_labels(df, non_year_cols, year_cols)
@@ -245,9 +266,9 @@ def _build_year_sections(df: pd.DataFrame, sheet_name: str) -> str:
 
         if is_most_recent:
             period_short = col_month_range if col_month_range else f"{year} YTD"
-            section_title = f"\n#### MOST RECENT DATA - {col} ({period_short})"
+            section_title = f"\n#### MOST RECENT DATA - [{sheet_name}] - {col} ({period_short})"
         else:
-            section_title = f"\n#### HISTORICAL DATA - Year {year} - {col}"
+            section_title = f"\n#### HISTORICAL DATA - [{sheet_name}] - Year {year} - {col}"
 
         if is_col_partial:
             period_note = col_month_range if col_month_range else "YTD"
@@ -266,7 +287,10 @@ def _build_year_sections(df: pd.DataFrame, sheet_name: str) -> str:
             rows.append(f"| {label} | {_fmt_value(value)} {tag} |")
 
         if rows:
-            table = "| Metric | Value (with exact period label) |\n|---|---|\n" + "\n".join(rows)
+            table = (
+                f"| Metric (scope: {sheet_name}) | Value (with exact period label) |\n|---|---|\n"
+                + "\n".join(rows)
+            )
             parts.append(f"{section_title}\n\n{table}")
 
     return "\n\n".join(parts)
