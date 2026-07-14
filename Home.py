@@ -46,12 +46,11 @@ section[data-testid="stSidebar"] { background: #ffffff !important; border-right:
 div[data-testid="stVerticalBlock"]:has(> div.element-container .hero-marker) {
     border: 1px solid #E2E8F0;
     border-left: 6px solid #2563EB;
-    border-radius: 18px;
+    border-radius: 12px;
     background: #ffffff;
     padding: 2.5rem 2rem !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     margin-bottom: 1.5rem;
-    overflow: hidden;
 }
 /* CTA box styling — shrink-wrapped to its content, light shaded fill */
 div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) {
@@ -65,7 +64,7 @@ div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) {
     justify-content: center;
     align-items: center;
     height: auto;
-    max-width: 300px;
+    max-width: 340px;
     margin: 0 auto;
 }
 /* Override CTA button styling */
@@ -118,12 +117,12 @@ with st.container():
         with st.container():
             st.markdown('<div class="cta-marker"></div>', unsafe_allow_html=True)
             st.markdown("""
-            <div style="text-align:justify; white-space:nowrap; margin-top:12px;">
-                <div style="font-size:17px; font-weight:600; color:#0F172A; margin-bottom:6px;">
-                    Generate your case study.
+            <div style="text-align:center;">
+                <div style="font-size:16px; font-weight:600; color:#0F172A; margin-bottom:6px;">
+                    Generate a case study in minutes.
                 </div>
                 <div style="font-size:15px; color:#64748B; margin-bottom:10px;">
-                    Click below to upload now!
+                    Upload now!
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -192,7 +191,9 @@ body { font-family: 'Inter', sans-serif; background: transparent; color: #0F172A
 .footer {
   font-size: 13px;
   color: #94A3B8;
+  margin-top: 8px;
   padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
   line-height: 1.6;
 }
 </style>
@@ -228,6 +229,10 @@ body { font-family: 'Inter', sans-serif; background: transparent; color: #0F172A
   <span class="tag">Audio</span>
   <span class="tag">Excel / CSV</span>
   <span class="tag">Web links</span>
+</div>
+
+<div class="footer">
+  A 4-Agent Pipeline handles extraction, narrative, exhibit and fact checking in sequence.
 </div>
 
 </body>

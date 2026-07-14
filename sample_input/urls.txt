@@ -1,4 +1,5 @@
 URLs:
-https://www.toyota-europe.com/about-us/toyota-vision-and-philosophy/toyota-production-system?utm_source
 
-https://www.toyota-global.com/company/history_of_toyota/75years/data/automotive_business/production/system/change.html?utm_source
+https://www.toyota-europe.com/about-us/toyota-vision-and-philosophy/toyota-production-system
+
+https://www.toyota-global.com/company/history_of_toyota/75years/data/automotive_business/production/system/change.html

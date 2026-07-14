@@ -69,6 +69,19 @@ flowchart TB
 
 **Root cause of Agent 1 "failure":** saved `[session_backup/master_transcript.md](session_backup/master_transcript.md)` contains only the Tata Steel homepage URL (nav menus, cookie banners) — not an annual report PDF. Agent 1 cannot extract company/revenue from that input. The pipeline architecture is sound; ingest quality and missing downstream agents are the blockers.
 
+### Phase 3: Stability & Optimization (App Architecture)
+*Implemented after narrative and data logic are finalized. Focus: Preventing edge-case crashes and API exhaustion in the Streamlit UI.*
+
+1. **Fix History Load Crash (`pages/5_Edit_Export.py`):**
+   - **Bug:** Loading a case from `My Case Studies` currently crashes when the app tries to generate the PDF filename (KeyError on `filtered_fact_sheet`).
+   - **Fix:** Wrap the filename generator in a `.get()` fallback to gracefully handle historical markdown loads where session state is incomplete.
+2. **Prevent Token/Rate-Limit Exhaustion (`pages/1_Upload_Documents.py`):**
+   - **Bug:** There is no hard cap on input size. A massive upload (e.g. 5M+ characters) will spawn thousands of chunks, leading to catastrophic 429 API errors, UI freezes, and huge costs.
+   - **Fix:** Add a strict character limit check (e.g., max 1 million characters) on Page 1 before proceeding to generation.
+3. **Graceful Pydantic Failure (`pipeline/agents/llm_client.py`):**
+   - **Bug:** If the LLM completely hallucinates a JSON structure (e.g., returning a List instead of a Dict), `generate_validated_json` exhausts retries and halts the app abruptly with an unhandled stack trace.
+   - **Fix:** Wrap `run_agent_1` in a try/except that yields an empty/default `FactSheet` or gracefully alerts the user instead of throwing a fatal red-screen error.
+
 ---
 
 ## Target architecture (matches [Project_Plan_Ananshi.md](Project_Plan_Ananshi.md))
@@ -200,7 +213,11 @@ Update `[pages/3_Select_Angle.py](pages/3_Select_Angle.py)` line 208 — replace
 
 ### 4A. Agent 2 — Storyteller
 
-**New file:** `[pipeline/agents/agent_storyteller.py](pipeline/agents/agent_storyteller.py)`
+**New file:** `[MODIFY] [theme_filter.py](file:///c:/MAHU_DOC/internship/IFQM/CaseGen/pipeline/agents/theme_filter.py)
+- **Fix Missing Excel Data in Exhibits:** Currently, `theme_filter.py` aggressively deletes `raw_facts` if they don't explicitly match the selected theme. This destroys the rich Excel data before the Exhibit Generator (Agent 3) can see it! 
+  *Proposed change:* Update the `_FILTER_PROMPT` to `"ALWAYS keep all raw_facts. Quantitative data is foundational context regardless of the theme."` Update the fallback code to never filter `raw_facts`.
+
+### [MODIFY] [agent_storyteller.py](file:///c:/MAHU_DOC/internship/IFQM/CaseGen/pipeline/agents/agent_storyteller.py)`
 
 **Inputs:** `filtered_fact_sheet`, `ui_config`, `[templates/case_template.json](templates/case_template.json)`, `[templates/few_shot_examples.json](templates/few_shot_examples.json)`
 
