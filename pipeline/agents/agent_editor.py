@@ -2,6 +2,7 @@
 
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 from pipeline.agents.llm_client import generate_text
 from pipeline.models.schemas import FactSheet
@@ -80,6 +81,58 @@ def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
     scrubbed = re.sub(r"\n{3,}", "\n\n", scrubbed)
     return scrubbed
 
+def _strip_em_dashes(text: str) -> str:
+    """Replace em/en dashes with plain hyphens (user style requirement).
+    Runs deterministically on the final document so no LLM output can slip through."""
+    text = re.sub(r"[ \t]*[\u2014\u2015][ \t]*", " - ", text)   # em dash / horizontal bar
+    text = text.replace("\u2013", "-").replace("\u2012", "-")  # en dash / figure dash
+    return text
+
+
+_EXHIBIT_BLOCK_RE = re.compile(
+    r"\*\*Exhibit\s+\d+[^\n]*\*\*[ \t]*\n+((?:\|[^\n]*\n?)*)",
+)
+
+
+def _remove_empty_exhibits(text: str) -> str:
+    """Deterministically drop exhibits whose tables contain no data rows
+    (header + separator only, or no table at all), then renumber the rest."""
+    def _check(m: re.Match) -> str:
+        table_lines = [l for l in m.group(1).splitlines() if l.strip().startswith("|")]
+        data_rows = [
+            l for l in table_lines[1:]
+            if not set(l.replace("|", "").strip()) <= {"-", ":", " "}
+        ]
+        if not data_rows:
+            print(f"[Agent 4] Removed empty exhibit: {m.group(0)[:80]!r}")
+            return ""
+        return m.group(0)
+
+    cleaned = _EXHIBIT_BLOCK_RE.sub(_check, text)
+
+    # Renumber surviving exhibits sequentially
+    counter = {"n": 0}
+    def _renumber(m: re.Match) -> str:
+        counter["n"] += 1
+        return f"**Exhibit {counter['n']}:"
+    cleaned = re.sub(r"\*\*Exhibit\s+\d+\s*:", _renumber, cleaned)
+
+    return re.sub(r"\n{3,}", "\n\n", cleaned)
+
+
+def _short_url_label(url: str, max_len: int = 60) -> str:
+    """Shorten a long URL for display in references (href keeps the full URL).
+    Prevents links from overflowing the PDF page edge."""
+    if len(url) <= max_len:
+        return url
+    p = urlparse(url)
+    last_segment = p.path.rstrip("/").split("/")[-1] if p.path.rstrip("/") else ""
+    label = f"{p.scheme}://{p.netloc}/.../{last_segment}" if last_segment else f"{p.scheme}://{p.netloc}/..."
+    if len(label) > max_len + 20:
+        label = f"{p.scheme}://{p.netloc}/..."
+    return label
+
+
 _SECTION_ORDER = [
     ("background", "Company Background"),
     ("industry_context", "Industry Context"),
@@ -137,7 +190,7 @@ def _merge_document(
     if fact_sheet.key_quotes:
         q_text, q_speaker = _pick_best_quote(fact_sheet.key_quotes)
         if q_text:
-            parts.append(f"> \"{q_text}\" \u2014 *{q_speaker}*\n")
+            parts.append(f"> \"{q_text}\" - *{q_speaker}*\n")
 
     for section_id, title in _SECTION_ORDER:
         body = narrative.get(section_id, "").strip()
@@ -195,14 +248,15 @@ def _build_references(
         # Detect if the source is a URL
         is_url = source.startswith("http://") or source.startswith("https://")
         if is_url:
+            label = _short_url_label(source)
             if "ifqm" in fmt:
-                lines.append(f"{i}. {name} ({year}). Retrieved from [{source}]({source})")
+                lines.append(f"{i}. {name} ({year}). Retrieved from [{label}]({source})")
             elif "mla" in fmt:
-                lines.append(f"{i}. {name}. *Web*. {year}. [{source}]({source})")
+                lines.append(f"{i}. {name}. *Web*. {year}. [{label}]({source})")
             elif "chicago" in fmt:
-                lines.append(f"{i}. {name}. {year}. [{source}]({source}).")
+                lines.append(f"{i}. {name}. {year}. [{label}]({source}).")
             else:  # APA default
-                lines.append(f"{i}. {name}. ({year}). Retrieved from [{source}]({source})")
+                lines.append(f"{i}. {name}. ({year}). Retrieved from [{label}]({source})")
         else:
             if "ifqm" in fmt:
                 lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
@@ -273,6 +327,7 @@ DRAFT DOCUMENT:
 
     # --- Deterministic hallucination scrub (runs regardless of LLM behaviour) ---
     edited = _scrub_hallucinations(edited, fact_sheet)
+    edited = _remove_empty_exhibits(edited)
 
     refs = _build_references(
         master_transcript,
@@ -284,4 +339,4 @@ DRAFT DOCUMENT:
     if "## References" not in edited:
         edited = edited.rstrip() + refs
 
-    return edited
+    return _strip_em_dashes(edited)
