@@ -9,30 +9,40 @@ _ANALYST_PROMPT = """
 You are a business case study analyst. Generate comprehensive exhibits and discussion questions from the FactSheet ONLY.
 
 EXHIBIT RULES:
-- Generate ONLY data-rich, quantitative exhibits. Fewer, heavier tables are better (target 3-6 exhibits).
+- Generate MULTIPLE focused, data-rich exhibits. Target 4–7 exhibits total — more is better than fewer.
 - Each exhibit must be a properly formatted Markdown table with a bold heading above it.
 - Do NOT invent numbers. Use ONLY data from the FactSheet.
-- If a category has no data, skip that exhibit.
-- DO NOT generate categorical exhibits like Quotes, Key People, Timeline, Challenges, Interventions, or Outcomes.
+- If a category has no data, skip that exhibit. Do NOT generate empty tables.
+- DO NOT generate purely qualitative exhibits (no Quotes, no generic Key People lists).
+- TEMPORAL METADATA RULE (CRITICAL): If a raw fact includes a time qualifier (e.g. "Q1", "Jan–May 2026", "YTD", "Cumulative", "FY2025"), that qualifier MUST appear verbatim in the "Context" or "Period" column of the table. Never strip or omit the time period from any data point.
+- DATA PRECISION RULE: Copy all numbers exactly as they appear in raw_facts. Never round, abbreviate, or convert units (e.g. write 10,823,000 not ~10.8M).
+{privacy_rule}
+{brevity_rule}
 
-Generate exhibits in this priority order (include all for which data exists):
+Generate exhibits in this priority order (include ALL for which data exists):
 
-1. **Financial Performance**: Extract all revenue, profit, operating income, and financial figures from the FactSheet.
-   ⚠️ CRITICAL: If the FactSheet "revenue" field is null or empty AND there are no explicit financial figures (revenue/profit/margins) in raw_facts or outcomes, SKIP this exhibit entirely. Do NOT generate a row that says "Revenue: Significant" or any vague placeholder. Instead, fold any financial-adjacent data (e.g. operating income, value chain income, cost reduction percentages) into Exhibit 2 (Key Metrics).
-   Columns: Metric | Value | Context.
+1. **Financial Performance**: All revenue, profit, operating income, and financial figures.
+   ⚠️ CRITICAL: If there are no explicit financial figures (revenue/profit/margins) in the FactSheet, SKIP this exhibit. Do NOT generate a row that says "Revenue: Significant" or any vague placeholder.
+   Columns: Metric | Value | Period | Context.
 
-2. **Key Metrics & Data**: All numerical figures from raw_facts, outcomes, and tagged_facts. This MUST include:
-   - Production/deployment metrics (e.g. "200 fuel-cell trucks operational", "180 fuel-cell buses")
-   - Technical performance specs (e.g. "1,000 km driving range", "20-minute charge time", "40% cost reduction")
-   - Sales volume and market figures (e.g. "3.5 million BEV units target by 2030")
-   - Any efficiency improvements (e.g. "10-12% fuel economy improvement", "20% hydrogen efficiency gain")
-   Columns: Metric | Value | Context.
+2. **Sales & Production Metrics**: All unit sales, production volumes, market share, and deployment figures.
+   This MUST include vehicle/product counts, regional breakdowns, and year-on-year comparisons if available.
+   Columns: Metric | Value | Period | Context.
 
-3. **Market / Competitive Comparison**: If there is data about market share, competitors, rankings, or industry scale. Columns: Category | Company/Metric | Value.
+3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
+   Columns: Metric | [Earliest Period] | [Latest Period] | Change / Trend.
 
-4. **Cost / Process Breakdown**: If there is data regarding operational efficiency, cost reductions, supply chain metrics, or process improvements. Columns: Process/Area | Metric | Improvement/Impact.
+4. **Timeline of Key Events**: A chronological exhibit of all major milestones, launches, and strategic decisions extracted from timeline_events. Include every event with a year.
+   Columns: Year | Event | Strategic Significance.
 
-5. **Strategic Investments / Targets**: Any data related to investments, budget allocations, or quantifiable sustainability/technology targets. Columns: Area/Initiative | Target/Investment | Deadline/Impact.
+5. **Market / Competitive Comparison**: If there is data about market share, competitors, rankings, or industry scale.
+   Columns: Category | Company/Metric | Value | Period.
+
+6. **Cost / Process Breakdown**: If there is data about operational efficiency, cost reductions, supply chain metrics, or process improvements.
+   Columns: Process/Area | Metric | Improvement/Impact | Period.
+
+7. **Strategic Investments & Targets**: Any data on investments, budget allocations, or quantifiable sustainability/technology targets.
+   Columns: Area/Initiative | Target/Investment | Deadline/Impact.
 
 Format all exhibits as:
 **Exhibit N: [Title]**
@@ -80,10 +90,35 @@ def run_agent_3(fact_sheet, ui_config: dict) -> dict:
     theme = ui_config.get("selected_theme") or "General Business Analysis"
     num_q = _question_count(audience)
 
+    # Executive Summary purpose → fewer, briefer exhibits
+    purpose = (ui_config.get("purpose") or "").lower()
+    if "executive summary" in purpose:
+        brevity_rule = (
+            "- BREVITY RULE (ACTIVE — Purpose is Executive Summary): Generate at most 2-3 "
+            "concise exhibits covering only the most decision-critical data. Each table must "
+            "stay under 8 rows. Prioritise the Financial Performance and Trend Analysis exhibits; "
+            "skip the rest unless essential."
+        )
+    else:
+        brevity_rule = ""
+
+    # Build the privacy masking rule based on UI config
+    if ui_config.get("data_privacy"):
+        privacy_rule = (
+            "- DATA PRIVACY RULE (ACTIVE): Replace ALL exact financial figures and "
+            "specific numerical values in the tables with directional bands "
+            "(e.g. \"> 10 Million units\", \"increased significantly\", \"high double-digit growth\"). "
+            "Do NOT include any exact numbers. Do NOT fabricate percentages."
+        )
+    else:
+        privacy_rule = "- DATA PRIVACY RULE: Keep all exact figures from the FactSheet as-is."
+
     prompt = _ANALYST_PROMPT.format(
         num_questions=num_q,
         audience_level=_audience_level(audience),
         theme=theme,
+        privacy_rule=privacy_rule,
+        brevity_rule=brevity_rule,
         exhibits_config=json.dumps(EXHIBITS_CONFIG),
         fact_sheet_json=fact_sheet.model_dump_json(indent=2),
     )
