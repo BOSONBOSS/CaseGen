@@ -17,7 +17,14 @@ import re
 # Any file whose name matches these patterns will be tagged HISTORICAL_REFERENCE_ONLY,
 # preventing the LLM from treating its financial figures as current data.
 _HISTORICAL_BOOK_PATTERNS = re.compile(
-    r"(production.system|tps|lean.thinking|machine.that.changed|toyota.way|kaizen|monozukuri|gemba)",
+    r"("
+    # Toyota-specific management books
+    r"production.system|tps|lean.thinking|machine.that.changed|toyota.way|kaizen|monozukuri|gemba"
+    # Generic historical/conceptual book title patterns
+    r"|the.making.of|history.of|story.of|origin.of|biography|memoir|chronicle"
+    r"|management.classic|business.classic|case.study.book|textbook|handbook"
+    r"|how.to|principles.of|art.of|science.of|philosophy.of"
+    r")",
     re.IGNORECASE,
 )
 

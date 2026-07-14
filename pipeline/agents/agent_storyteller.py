@@ -250,9 +250,9 @@ WHY that specific approach was chosen, and HOW it was executed.
      paragraph that transforms a list of actions into a coherent strategy.
 
   b) NAMED PROTAGONISTS: Every major initiative must be attributed to a named decision-maker
-     from the FactSheet's key_people. Do not write "the company decided" — write "President
-     Koji Sato directed..." or "Chairman Akio Toyoda championed...". If no named individual
-     is in the FactSheet for a decision, attribute it to the specific team or function.
+     from the FactSheet's key_people. Do not write "the company decided" — use the actual
+     name and title from key_people (e.g. "[CEO Name] directed..." or "[Chairman Name] championed...").
+     If no named individual is in the FactSheet for a decision, attribute it to the specific team or function.
 
   c) INITIATIVE DEEP-DIVES: For each strategic initiative (especially those in
      strategic_initiatives), write a dedicated sub-section that explains:
@@ -267,9 +267,8 @@ WHY that specific approach was chosen, and HOW it was executed.
      MUST follow this logic: "By doing [X], the company achieved [Y] BECAUSE [Z mechanism]."
      BANNED: "This initiative improved results." (no mechanism)
      BANNED: "The strategy led to growth." (no specifics)
-     REQUIRED: "By co-developing the bZ3X platform exclusively for the Chinese market with GAC
-     and FAW, Toyota captured a price point previously inaccessible to its global lineup,
-     which directly drove a 15% increase in its China BEV market share in 2024."
+     REQUIRED FORMAT: "By [specific action taken], [Company] achieved [specific measurable outcome]
+     because [mechanism — i.e. how and why this action produced this specific result]."
      If the FactSheet does NOT provide a causal link between an initiative and an outcome,
      state the initiative and its intended goal separately. DO NOT invent causation.
 """,
@@ -287,10 +286,8 @@ Show don't tell. This section must be data-dense and analytically rich.
      "[Outcome] happened because [specific intervention or mechanism] which worked by [how]."
      BANNED: "Sales grew 12% in 2024." (no cause)
      BANNED: "The company saw improved profitability." (no mechanism)
-     REQUIRED: "Electrified vehicle sales reached 3.86 million units in 2024, a 19% increase
-     year-on-year, driven by the ramp-up of the TNGA platform's shared hybrid components
-     across 14 models simultaneously, which compressed per-unit battery costs by allowing
-     volume procurement across a unified powertrain architecture."
+     REQUIRED FORMAT: "[Specific metric] reached [exact figure] in [year], a [X%] increase,
+     driven by [named initiative] which worked by [mechanism — why this produced that result]."
      If the FactSheet does not explain WHY an outcome occurred, present the result with its
      number and year, then note the strategic action that preceded it — without inventing
      a causal link that is not in the data.
@@ -346,13 +343,13 @@ management platitudes that could apply to any company in any industry.
        from the FactSheet. Choose frameworks relevant to the Discipline (e.g. Porter's Five
        Forces, PESTLE, Resource-Based View, SWOT, Blue Ocean Strategy, BCG Matrix, Balanced
        Scorecard, Triple Bottom Line, Lean/TPS, PDCA, ISO standards for quality, etc.).
-       Example: "Using the Resource-Based View, assess whether Toyota's TPS constitutes an
-       inimitable resource that competitors cannot replicate within a 5-year window."
+       Example: "Using the Resource-Based View, assess whether [Company]'s [named initiative]
+       constitutes an inimitable resource that competitors cannot replicate within 5 years."
      TYPE B (Open / Reflective): Pose a genuine strategic dilemma or ethical question that
        invites discussion without a single right answer. These should be rooted in the specific
        facts and tensions in the case, not generic.
-       Example: "If you were Koji Sato, would you accelerate full BEV adoption at the risk of
-       stranding Toyota's hybrid supply chain, or maintain the multi-pathway strategy?"
+       Example: "If you were [CEO Name], would you [strategic path A] at the risk of [downside A],
+       or pursue [strategic path B] given [evidence from FactSheet]?"
      Include at least 2 of each type. All questions must be specific to this company's situation.
      BANNED: "How did the company manage change?" or "What can other companies learn from this?"
 """,
@@ -380,13 +377,13 @@ DATA INTEGRITY RULES (non-negotiable — enforced post-hoc by a code scrubber):
 4. Use ONLY named entities (people, products, partners, awards, programmes) that explicitly
    appear in the FactSheet. Describe anything absent generically.
 5. REVENUE / MARKET SIZE RULE: If the FactSheet does not explicitly state a total revenue or
-   market size figure, you MUST NOT invent one. SPECIFICALLY: NEVER write '¥30 trillion', '30
-   trillion yen', or ANY currency+trillion figure unless it appears verbatim in the FactSheet's
+   market size figure, you MUST NOT invent one. SPECIFICALLY: NEVER write any currency+large-unit
+   figure (e.g. '¥30 trillion', '$500 billion') unless it appears verbatim in the FactSheet's
    revenue or raw_facts fields. If revenue is null in the FactSheet, describe scale qualitatively
-   (e.g. "one of the world's largest automakers by production volume").
-5b. PARTIAL-YEAR DATA RULE: If a raw_fact is labelled as "Jan–May", "cumulative", "YTD", or
-   "partial year", you MUST cite it with that qualifier (e.g. "In the first five months of 2026,
-   Toyota sold 4.14 million units worldwide"). NEVER present a partial-year figure as if it is a
+   (e.g. "one of the world's largest companies in its sector by revenue").
+5b. PARTIAL-YEAR DATA RULE: If a raw_fact is labelled as "Jan-May", "cumulative", "YTD", or
+   "partial year", you MUST cite it with that qualifier (e.g. "In the first five months of [year],
+   [Company] recorded [figure]"). NEVER present a partial-year figure as if it is a
    full annual total, and NEVER extrapolate or annualise a partial figure to estimate a full year.
 6. METRICS CLAIM RULE: NEVER write "specific quantitative metrics were not disclosed" or
    "no figures were available." If there is truly no data, simply omit that topic entirely.
@@ -397,11 +394,14 @@ DATA INTEGRITY RULES (non-negotiable — enforced post-hoc by a code scrubber):
 ═══════════════════════════════════════════════════════════
 TONE AND VOICE RULES:
 ═══════════════════════════════════════════════════════════
-8.  Use ACTIVE VOICE throughout. "Toyota launched the bZ3X" not "The bZ3X was launched."
+8.  Use ACTIVE VOICE throughout. "[Company] launched [Initiative]" not "[Initiative] was launched."
 9.  Match the STRATEGIC CONFIDENCE of the source document. This company has a plan.
-10. Use EXACT TERMINOLOGY from the FactSheet: "multi-pathway strategy", "monozukuri",
-    "genba", "kaizen", "region-centered management" — never paraphrase into generic terms.
-11. Use PRECISE powertrain terminology: BEV, PHEV, HEV, FCEV — never the generic "EV."
+10. Use EXACT TERMINOLOGY from the FactSheet — proprietary framework names, programme titles,
+    strategic labels, brand names — never paraphrase into generic terms.
+11. INDUSTRY-SPECIFIC TERMINOLOGY: Use the precise technical vocabulary from the FactSheet.
+    If this is an automotive company, use exact powertrain terms (BEV, PHEV, HEV, FCEV) — never
+    the generic "EV." If this is a pharma company, use exact drug/trial terminology. If this
+    is a tech company, use exact product/platform names. Always prefer the FactSheet's own language.
 12. CRITICAL DATA RULE: Every paragraph MUST contain at least one specific number, percentage,
     date, or quantitative metric from the FactSheet. NEVER write a paragraph of purely qualitative
     prose when numbers are available. If the FactSheet has 10 numbers, use all 10 in the text.
