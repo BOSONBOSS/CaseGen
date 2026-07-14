@@ -1,76 +1,88 @@
+# Old implementation preserved as comments for reference
 # from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 # def chunk_master_transcript(master_transcript, chunk_size=1000, chunk_overlap=200):
-#     if not master_transcript:
-#         return []
-
 #     combined_text = ""
-
-#     if isinstance(master_transcript, str):
-#         combined_text = master_transcript
-
-#     elif isinstance(master_transcript, dict):
+#     if isinstance(master_transcript, dict):
 #         for filename, text in master_transcript.items():
 #             if text and text.strip():
 #                 combined_text += f"\n\n[Source: {filename}]\n{text}"
-
-#     else:
-#         combined_text = str(master_transcript)
-
-#     if not combined_text.strip():
-#         return []
-
-#     splitter = RecursiveCharacterTextSplitter(
-#         chunk_size=chunk_size,
-#         chunk_overlap=chunk_overlap,
-#         separators=["\n\n", "\n", ".", " ", ""],
-#         length_function=len,
-#     )
-
+#     splitter = RecursiveCharacterTextSplitter(...)
 #     chunks = splitter.split_text(combined_text)
-#     print(f"[Chunker] Created {len(chunks)} chunks from {len(combined_text)} characters")
 #     return chunks
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+import re
+
+# File patterns that identify a historical/conceptual reference (not a current financial report).
+# Any file whose name matches these patterns will be tagged HISTORICAL_REFERENCE_ONLY,
+# preventing the LLM from treating its financial figures as current data.
+_HISTORICAL_BOOK_PATTERNS = re.compile(
+    r"(production.system|tps|lean.thinking|machine.that.changed|toyota.way|kaizen|monozukuri|gemba)",
+    re.IGNORECASE,
+)
+
+_SPREADSHEET_EXTENSIONS = (".xlsx", ".xls", ".csv")
+
+_REPORT_PATTERNS = re.compile(
+    r"(annual.report|integrated.report|sustainability|investor|financial.results|earnings)",
+    re.IGNORECASE,
+)
+
+
+def _classify_source(filename: str) -> str:
+    """
+    Returns a source authority label that the LLM uses to determine how to treat figures
+    from a given file. This is the primary defence against cross-source contamination
+    (e.g. a 1978 book figure being used as a 2023 revenue number).
+    """
+    fn = filename.lower()
+    if any(fn.endswith(ext) for ext in _SPREADSHEET_EXTENSIONS):
+        return (
+            "AUTHORITATIVE_DATA: Quantitative spreadsheet / sales data. "
+            "All numerical figures here are primary source facts and should be extracted exactly."
+        )
+    if _HISTORICAL_BOOK_PATTERNS.search(fn):
+        return (
+            "HISTORICAL_REFERENCE_ONLY: This is a book or academic text describing historical "
+            "practices or past context. ANY financial figures (revenue, costs, profits) in this "
+            "source reflect the era when the book was written, NOT current financial performance. "
+            "DO NOT extract figures from this source as current revenue, profit, or market data. "
+            "Use this source ONLY for conceptual frameworks, management philosophy, and historical context."
+        )
+    if _REPORT_PATTERNS.search(fn):
+        return (
+            "AUTHORITATIVE_REPORT: Current corporate report. "
+            "Financial and strategic figures are current and authoritative."
+        )
+    return (
+        "SUPPORTING_SOURCE: Use for qualitative context only. "
+        "Do not treat financial figures from this source as current company performance data "
+        "unless they are explicitly dated and match the report year."
+    )
 
 
 def chunk_master_transcript(master_transcript, chunk_size=2000, chunk_overlap=300):
     """
     Splits the master transcript into overlapping chunks for LLM processing.
 
-    chunk_size=2000 / chunk_overlap=300 is tuned for dense corporate documents
-    such as annual reports and integrated reports. Smaller documents (press releases,
-    articles) will produce fewer, larger chunks — which is fine.
+    CRITICAL DESIGN: Each individual chunk is tagged with its source filename AND a
+    source authority classification. This tag is prepended to EVERY chunk (not just the
+    first chunk per file), so the LLM never loses track of which document a fact came
+    from even when processing chunks in isolation during batch extraction.
+
+    This prevents two known failure modes:
+    1. Cross-source contamination: LLM uses a 1978 book figure as a 2023 revenue number.
+    2. Year confusion: LLM uses a historical year's column from the spreadsheet as current.
 
     Args:
         master_transcript: Either a string (raw text) or a dict {filename: text}
-        chunk_size: Characters per chunk
-        chunk_overlap: Overlap between consecutive chunks
+        chunk_size: Characters per chunk (default 2000, tuned for dense annual reports)
+        chunk_overlap: Overlap between consecutive chunks (default 300)
 
     Returns:
-        List of text chunk strings
+        List of text chunk strings, each prefixed with [SOURCE FILE] and [AUTHORITY] tags.
     """
     if not master_transcript:
-        return []
-
-    combined_text = ""
-
-    if isinstance(master_transcript, str):
-        combined_text = master_transcript
-        print(f"[Chunker] Received string of length: {len(combined_text)}")
-
-    elif isinstance(master_transcript, dict):
-        for filename, text in master_transcript.items():
-            if text and text.strip():
-                combined_text += f"\n\n[Source: {filename}]\n{text}"
-        print(f"[Chunker] Combined {len(master_transcript)} files")
-
-    else:
-        combined_text = str(master_transcript)
-        print(f"[Chunker] Received unknown type, converted to string")
-
-    if not combined_text.strip():
-        print("[Chunker] Warning: No text content found")
         return []
 
     splitter = RecursiveCharacterTextSplitter(
@@ -80,6 +92,35 @@ def chunk_master_transcript(master_transcript, chunk_size=2000, chunk_overlap=30
         length_function=len,
     )
 
-    chunks = splitter.split_text(combined_text)
-    print(f"[Chunker] Created {len(chunks)} chunks from {len(combined_text)} characters")
-    return chunks
+    if isinstance(master_transcript, str):
+        # Legacy path: plain string with no source info available
+        chunks = splitter.split_text(master_transcript)
+        print(f"[Chunker] Created {len(chunks)} chunks from plain string")
+        return chunks
+
+    elif isinstance(master_transcript, dict):
+        all_chunks = []
+        for filename, text in master_transcript.items():
+            if not text or not str(text).strip():
+                continue
+            authority = _classify_source(filename)
+            # Split this file's text into chunks INDEPENDENTLY (no cross-file splicing)
+            file_chunks = splitter.split_text(str(text))
+            # Prepend [SOURCE FILE] + [AUTHORITY] to EVERY individual chunk
+            # so the tag is never split away from its data during batch processing
+            tagged_chunks = [
+                f"[SOURCE FILE: {filename}]\n[AUTHORITY: {authority}]\n\n{chunk}"
+                for chunk in file_chunks
+            ]
+            all_chunks.extend(tagged_chunks)
+            print(f"[Chunker] {filename}: {len(file_chunks)} chunks | {authority[:50]}...")
+        print(
+            f"[Chunker] Total: {len(all_chunks)} tagged chunks "
+            f"from {len(master_transcript)} source files"
+        )
+        return all_chunks
+
+    else:
+        chunks = splitter.split_text(str(master_transcript))
+        print(f"[Chunker] Unknown input type, converted to string: {len(chunks)} chunks")
+        return chunks
