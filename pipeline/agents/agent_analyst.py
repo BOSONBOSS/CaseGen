@@ -9,13 +9,13 @@ _ANALYST_PROMPT = """
 You are a business case study analyst. Generate comprehensive exhibits and discussion questions from the FactSheet ONLY.
 
 EXHIBIT RULES:
-- Generate MULTIPLE focused, data-rich exhibits. Target 4–7 exhibits total — more is better than fewer.
+- Generate MULTIPLE focused, data-rich exhibits. Target 6 highly detailed exhibits total.
 - Each exhibit must be a properly formatted Markdown table with a bold heading above it.
 - Do NOT invent numbers. Use ONLY data from the FactSheet.
 - If a category has no data, skip that exhibit. Do NOT generate empty tables.
 - DO NOT generate purely qualitative exhibits (no Quotes, no generic Key People lists).
 - TEMPORAL METADATA RULE (CRITICAL): If a raw fact includes a time qualifier (e.g. "Q1", "Jan–May 2026", "YTD", "Cumulative", "FY2025"), that qualifier MUST appear verbatim in the "Context" or "Period" column of the table. Never strip or omit the time period from any data point.
-- DATA PRECISION RULE: Copy all numbers exactly as they appear in raw_facts. Never round, abbreviate, or convert units (e.g. write 10,823,000 not ~10.8M).
+- DATA PRECISION RULE: Copy numbers exactly as they appear in raw_facts. Never round or convert units (e.g. write 10,823,000 not ~10.8M) UNLESS the source data itself explicitly uses '~' or '>' (e.g. '>50%', '~200'). If the source uses symbols, you may use them.
 - SEGMENT SCOPE RULE (CRITICAL): If a raw fact is scoped to a segment, brand, region, or country (e.g. "electrified vehicles", "Lexus", "Vietnam"), that scope MUST appear in the Metric or Context column. NEVER present a segment/country figure or growth rate as a company-wide total.
 {privacy_rule}
 {brevity_rule}
@@ -26,9 +26,9 @@ Generate exhibits in this priority order (include ALL for which data exists):
    ⚠️ CRITICAL: If there are no explicit financial figures (revenue/profit/margins) in the FactSheet, SKIP this exhibit. Do NOT generate a row that says "Revenue: Significant" or any vague placeholder.
    Columns: Metric | Value | Period | Context.
 
-2. **Sales & Production Metrics**: All unit sales, production volumes, market share, and deployment figures.
-   This MUST include vehicle/product counts, regional breakdowns, and year-on-year comparisons if available.
-   Columns: Metric | Value | Period | Context.
+2. **Sales, Production & Product Breakdown**: All unit sales, production volumes, market share, and deployment figures.
+   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available), regional breakdowns, and year-on-year comparisons (YoY % growth) if available.
+   Columns: Metric/Segment | Units/Value | Period | YoY Change / Context.
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
    Columns: Metric | [Earliest Period] | [Latest Period] | Change / Trend.
@@ -42,8 +42,11 @@ Generate exhibits in this priority order (include ALL for which data exists):
 6. **Cost / Process Breakdown**: If there is data about operational efficiency, cost reductions, supply chain metrics, or process improvements.
    Columns: Process/Area | Metric | Improvement/Impact | Period.
 
-7. **Strategic Investments & Targets**: Any data on investments, budget allocations, or quantifiable sustainability/technology targets.
+7. **Strategic Investments & Targets**: Any data on investments, budget allocations, or quantifiable sustainability/technology targets (e.g., GHG reduction targets, sales targets).
    Columns: Area/Initiative | Target/Investment | Deadline/Impact.
+
+8. **Key Partnerships & Collaborations**: Any joint ventures, municipal agreements, or corporate partnerships. Include as many specific partner names and collaboration details as available.
+   Columns: Partner | Area of Collaboration | Description/Details.
 
 Format all exhibits as:
 **Exhibit N: [Title]**

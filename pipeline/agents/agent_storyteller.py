@@ -56,6 +56,13 @@ def _build_system_context(ui_config: dict, case_template: dict, few_shot: dict) 
     return f"""
 Style rules: {case_template.get("style_rules", "")}
 
+GENTLE NARRATIVE GUIDELINES (CRITICAL):
+1. Anti-Wordiness: Write concisely and directly. Do NOT use generic filler phrases like "This initiative was designed to..." or "What made this distinctive was...". Start sentences directly with the subject or action.
+2. Thesis (Background section): Ensure the introduction establishes a clear tension (e.g., a strategic challenge) and an arguable thesis, not just a list of facts.
+3. Subheadings (Intervention section): Use descriptive markdown subheadings (###) to clearly organize and separate distinct interventions or strategic initiatives.
+4. Causal Mechanisms (Results section): When describing outcomes, explicitly explain the specific mechanism of HOW the intervention led to the result (don't just state the correlation).
+5. Synthesis (Learnings section): Conclude with a final synthesis paragraph that reconnects to the opening thesis, placed immediately before any discussion questions.
+
 Template sections (minimum word targets — there is NO maximum; write as much as the data warrants):
 {sections_block}
 
