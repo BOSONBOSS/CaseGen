@@ -37,7 +37,7 @@ class TaggedFact(BaseModel):
 
 class FactSheet(BaseModel):
     company_name: str = Field(description="Full legal name of the company")
-    founding_year: Optional[str] = None
+    founding_year: Optional[str | int] = None
     industry: Optional[str] = None
     headquarters: Optional[str] = None
     revenue: Optional[str] = Field(None, description="Revenue figure with currency and year")
