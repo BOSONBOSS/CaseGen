@@ -27,9 +27,9 @@ Generate exhibits in this priority order (include ALL for which data exists):
    Columns: Metric | Value | Period | Context.
 
 2. **Sales, Production & Product Breakdown**: All unit sales, production volumes, market share, and deployment figures.
-   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available) and regional breakdowns.
-   YoY COLUMN RULE (CRITICAL): If you have figures for more than one year or period, you MUST calculate and fill the YoY percentage change yourself (formula: (new - old) / old × 100). Do NOT leave this column blank. If only one period exists, write "Baseline" in that cell.
-   Columns: Metric/Segment | Units/Value | Period | YoY Change / Context.
+   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available) and regional breakdowns. Include ALL relevant rows — do not drop rows to make room.
+   Columns: Metric/Segment | Units/Value | Period.
+   NOTE: Year-on-year comparisons belong in the dedicated Trend Analysis exhibit (Exhibit 3), not here.
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
    Columns: Metric | [Earliest Period] | [Latest Period] | Change / Trend.

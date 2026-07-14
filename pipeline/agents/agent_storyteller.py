@@ -62,6 +62,7 @@ GENTLE NARRATIVE GUIDELINES (CRITICAL):
 3. Subheadings (Intervention section): Use descriptive markdown subheadings (###) to clearly organize and separate distinct interventions or strategic initiatives.
 4. Causal Mechanisms (Results section): When describing outcomes, explicitly explain the specific mechanism of HOW the intervention led to the result (don't just state the correlation).
 5. Synthesis (Learnings section): Conclude with a final synthesis paragraph that reconnects to the opening thesis, placed immediately before any discussion questions.
+6. Quote Integrity: The opening quote MUST be taken verbatim from the key_quotes field in the FactSheet. Do NOT paraphrase, adapt, or invent any quote.
 
 Template sections (minimum word targets — there is NO maximum; write as much as the data warrants):
 {sections_block}
