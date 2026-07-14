@@ -183,9 +183,14 @@ the reader sees; it must immediately establish the dramatic stakes.
      The thesis must be woven as a recurring theme that every subsequent section refers back to.
 
   c) ANTI-META BAN (CRITICAL): NEVER use the following phrases or anything like them:
-     "This case study will explore...", "In this report, we will...", "As we will see...",
-     "This paper examines...", "The following sections detail...", "We will analyze..."
-     These are journalistic crutches. A great case study SHOWS its argument, it never announces it.
+     - Opening meta: "This case study will explore...", "In this report, we will...", "As we will see...",
+       "This paper examines...", "The following sections detail...", "We will analyze..."
+     - Closing clichés: "In summary,", "To summarize,", "In conclusion,", "To conclude,",
+       "Overall,", "In essence,", "Taken together,"
+     These are formulaic crutches. A great case study SHOWS its argument — it never announces or
+     summarises it. Let the evidence and narrative speak for themselves. If you need a transition,
+     use substantive connectives: "Consequently,", "This translated into...", "The result was...",
+     "What followed was...", "This decision proved pivotal because...".
 
   d) COMPANY PORTRAIT: After the hook and thesis, provide a rich portrait of the company —
      its founding, scale, culture, and strategic identity — using ONLY data from the FactSheet.
@@ -336,15 +341,20 @@ management platitudes that could apply to any company in any industry.
      not definitively resolve. Make them company-specific, not generic.
 
   f) DISCUSSION QUESTIONS: Include 4-6 substantive, open-ended discussion questions calibrated
-     to the Discipline and Audience above. Each question MUST:
-     - Name a specific analytical framework relevant to the Discipline
-       (e.g. Porter's Five Forces, PESTLE, Resource-Based View, SWOT, Blue Ocean Strategy,
-       BCG Matrix, Balanced Scorecard, Triple Bottom Line — choose based on the Discipline)
-     - Be anchored to a specific situation, decision, or data point from the FactSheet
-     - NOT be answerable with a simple yes/no
-     BANNED: "How did the company manage change?"
-     REQUIRED: "Using Porter's Five Forces, assess the bargaining power of battery suppliers
-     over [Company] as it scales its BEV production to [specific target] units by [year]."
+     to the Discipline and Audience above. Questions should be of two types:
+     TYPE A (Framework-grounded): Apply a named analytical framework to a specific data point
+       from the FactSheet. Choose frameworks relevant to the Discipline (e.g. Porter's Five
+       Forces, PESTLE, Resource-Based View, SWOT, Blue Ocean Strategy, BCG Matrix, Balanced
+       Scorecard, Triple Bottom Line, Lean/TPS, PDCA, ISO standards for quality, etc.).
+       Example: "Using the Resource-Based View, assess whether Toyota's TPS constitutes an
+       inimitable resource that competitors cannot replicate within a 5-year window."
+     TYPE B (Open / Reflective): Pose a genuine strategic dilemma or ethical question that
+       invites discussion without a single right answer. These should be rooted in the specific
+       facts and tensions in the case, not generic.
+       Example: "If you were Koji Sato, would you accelerate full BEV adoption at the risk of
+       stranding Toyota's hybrid supply chain, or maintain the multi-pathway strategy?"
+     Include at least 2 of each type. All questions must be specific to this company's situation.
+     BANNED: "How did the company manage change?" or "What can other companies learn from this?"
 """,
     }
 
