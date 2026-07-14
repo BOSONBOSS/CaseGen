@@ -99,10 +99,15 @@ def _remove_empty_exhibits(text: str) -> str:
     (header + separator only, or no table at all), then renumber the rest."""
     def _check(m: re.Match) -> str:
         table_lines = [l for l in m.group(1).splitlines() if l.strip().startswith("|")]
-        data_rows = [
-            l for l in table_lines[1:]
-            if not set(l.replace("|", "").strip()) <= {"-", ":", " "}
-        ]
+        _PLACEHOLDER_CELLS = {"", "-", "--", "n/a", "na", "none", "not disclosed", "not available", "no data"}
+        data_rows = []
+        for l in table_lines[1:]:
+            if set(l.replace("|", "").strip()) <= {"-", ":", " "}:
+                continue  # separator row
+            cells = [c.strip().strip("*").lower() for c in l.strip().strip("|").split("|")]
+            if all(c in _PLACEHOLDER_CELLS for c in cells):
+                continue  # placeholder-only row
+            data_rows.append(l)
         if not data_rows:
             print(f"[Agent 4] Removed empty exhibit: {m.group(0)[:80]!r}")
             return ""
@@ -120,17 +125,11 @@ def _remove_empty_exhibits(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", cleaned)
 
 
-def _short_url_label(url: str, max_len: int = 60) -> str:
-    """Shorten a long URL for display in references (href keeps the full URL).
-    Prevents links from overflowing the PDF page edge."""
-    if len(url) <= max_len:
-        return url
-    p = urlparse(url)
-    last_segment = p.path.rstrip("/").split("/")[-1] if p.path.rstrip("/") else ""
-    label = f"{p.scheme}://{p.netloc}/.../{last_segment}" if last_segment else f"{p.scheme}://{p.netloc}/..."
-    if len(label) > max_len + 20:
-        label = f"{p.scheme}://{p.netloc}/..."
-    return label
+def _url_site_name(url: str) -> str:
+    """Human-readable site name for embedding a link inside a citation sentence,
+    e.g. 'https://global.toyota/pages/...' -> 'global.toyota'."""
+    netloc = urlparse(url).netloc or url
+    return netloc.removeprefix("www.")
 
 
 _SECTION_ORDER = [
@@ -248,15 +247,15 @@ def _build_references(
         # Detect if the source is a URL
         is_url = source.startswith("http://") or source.startswith("https://")
         if is_url:
-            label = _short_url_label(source)
+            site = _url_site_name(source)
             if "ifqm" in fmt:
-                lines.append(f"{i}. {name} ({year}). Retrieved from [{label}]({source})")
+                lines.append(f"{i}. {name} ({year}). Retrieved from the official [{site}]({source}) website.")
             elif "mla" in fmt:
-                lines.append(f"{i}. {name}. *Web*. {year}. [{label}]({source})")
+                lines.append(f"{i}. {name}. *Web*. {year}. Available on the [{site}]({source}) website.")
             elif "chicago" in fmt:
-                lines.append(f"{i}. {name}. {year}. [{label}]({source}).")
+                lines.append(f"{i}. {name}. {year}. Accessed via the [{site}]({source}) website.")
             else:  # APA default
-                lines.append(f"{i}. {name}. ({year}). Retrieved from [{label}]({source})")
+                lines.append(f"{i}. {name}. ({year}). Retrieved from the official [{site}]({source}) website.")
         else:
             if "ifqm" in fmt:
                 lines.append(f"{i}. {name} ({year}). *{source}*. Retrieved from company records.")
