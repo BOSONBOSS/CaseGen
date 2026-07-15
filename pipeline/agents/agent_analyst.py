@@ -12,6 +12,7 @@ EXHIBIT RULES:
 - Generate MULTIPLE focused, data-rich exhibits. Target 6 highly detailed exhibits total.
 - Each exhibit must be a properly formatted Markdown table with a bold heading above it.
 - Do NOT invent numbers. Use ONLY data from the FactSheet.
+- NO COMPUTATION RULE (ABSOLUTE): NEVER write a number into any exhibit cell that does not appear VERBATIM in the FactSheet raw_facts. This includes totals, subtotals, aggregates, and averages. If a grand total figure does not exist as a single explicit number in raw_facts, do NOT write one — omit the total row entirely or label it "See individual rows above". NEVER sum two or more figures from raw_facts to produce a new number. BANNED EXAMPLE: if raw_facts contains Toyota+Lexus: 4,140,444 and you cannot find an explicit grand total figure in raw_facts, you MUST NOT write any other number for the total.
 - If a category has no data, skip that exhibit. Do NOT generate empty tables.
 - DO NOT generate purely qualitative exhibits (no Quotes, no generic Key People lists).
 - TEMPORAL METADATA RULE (CRITICAL): If a raw fact includes a time qualifier (e.g. "Q1", "Jan–May 2026", "YTD", "Cumulative", "FY2025"), that qualifier MUST appear verbatim in the "Context" or "Period" column of the table. Never strip or omit the time period from any data point.
@@ -42,6 +43,7 @@ Generate exhibits in this priority order (include ALL for which data exists):
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
    ⚠️ COMPLETENESS RULE: You MUST include ALL years present in the raw_facts for each metric. If raw_facts contains 2023, 2024, 2025, and 2026 figures, the table MUST have columns for all four periods. Do NOT show only the first and last year — include every intermediate year.
+   ⚠️ LIKE-FOR-LIKE PERIOD RULE (CRITICAL): NEVER compute or display a percentage change between a partial-year period and a full-year period. A partial-year figure (e.g. Jan–May 2026, Q1, YTD) can ONLY appear in a trend column alongside other figures from the equivalent partial period of prior years (e.g. Jan–May 2025). If the equivalent prior partial-year figure does NOT exist in raw_facts, show the partial-year figure as a standalone column WITHOUT a percentage change — label it as "Jan–May 2026 (partial)" and leave the Change/Trend cell as "N/A — partial year". BANNED: Computing -3.53% by comparing Jan–May 2026 sales to full-year 2023 sales. These are different-duration periods and cannot be directly compared.
    Columns: Metric | [Year 1] | [Year 2] | [Year 3] | ... | Change / Trend.
 
 4. **Timeline of Key Events**: A chronological exhibit of all major milestones, launches, and strategic decisions extracted from timeline_events. Include every event with a year.
@@ -60,6 +62,8 @@ Generate exhibits in this priority order (include ALL for which data exists):
    Columns: Partner | Area of Collaboration | Description/Details.
 
 ⚠️ EMPTY EXHIBIT RULE (ABSOLUTE): If you do not have enough data from the FactSheet to populate a specific exhibit with at least 2 real rows of data, DO NOT generate that exhibit at all. It is better to have 4 complete exhibits than 8 exhibits where half are empty or contain only headers. A completely empty exhibit or one with placeholder text is a CRITICAL ERROR. Only generate an exhibit if you have actual data to fill it.
+
+⚠️ SCHEMA LOCK RULE (ABSOLUTE): You MUST ONLY generate exhibits whose TYPE and TITLE match one of the 8 defined exhibit types above (Financial Performance, Sales & Product Breakdown, Trend Analysis, Timeline, Market Comparison, Cost/Process Breakdown, Strategic Investments, Key Partnerships). Do NOT invent a new exhibit type, a custom title, or a new exhibit slot that is not in this list. If a topic does not fit any of the 8 types, include the data in the most relevant existing exhibit rather than creating a new one. BANNED: Creating an exhibit called "Anticipated Future Sales", "Key Challenges", "Interventions", or any other title not on the defined list.
 
 Format all exhibits as:
 **Exhibit N: [Title]**
