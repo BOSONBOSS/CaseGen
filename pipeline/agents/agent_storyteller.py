@@ -268,12 +268,36 @@ WHY that specific approach was chosen, and HOW it was executed.
      [initiative]" unless the FactSheet explicitly states this.
 
   c) INITIATIVE DEEP-DIVES: For each strategic initiative (especially those in
-     strategic_initiatives), write a dedicated sub-section that explains:
-     - What it is (name it precisely as it appears in the FactSheet)
-     - What problem it solves
-     - How it works (mechanism, not just description)
-     - What makes it distinctive or innovative
-     - Key partnerships or collaborations involved (name all partners from key_partnerships)
+     strategic_initiatives), write a dedicated sub-section that covers all 5 of the
+     following analytical elements in flowing, professional prose:
+       1. What it is (name it precisely as it appears in the FactSheet)
+       2. What specific problem or strategic pressure it addresses
+       3. How it works — the mechanism, not just the description
+       4. What makes it distinctive or innovative versus alternatives
+       5. Key partnerships or collaborations involved (name all partners from key_partnerships)
+
+     THEMATIC SUBHEADINGS (CRITICAL): The ### subheading for each initiative MUST reflect
+     the actual strategic goal or outcome of THAT specific initiative as it relates to THIS
+     company's situation. The subheading must read like a section title in a Harvard Business
+     Review article — specific, substantive, and tied to the case context.
+     EXAMPLES OF GOOD SUBHEADINGS:
+       - "### Rebuilding Customer Loyalty Through the Service Activated Warranty"
+       - "### Hydrogen as a Competitive Hedge: Toyota's Motorsport-to-Market Strategy"
+       - "### Protecting Market Share in a Fragmenting BEV Landscape"
+     EXAMPLES OF BANNED SUBHEADINGS (DO NOT USE THESE OR ANYTHING LIKE THEM):
+       - "### What It Is"
+       - "### What Problem It Solves"
+       - "### How It Works"
+       - "### What Makes It Distinctive"
+       - "### Key Partnerships"
+     BANNED means these exact phrases, AND any paraphrase or rewording of them (e.g.
+     "### The Mechanism", "### Its Distinctive Qualities", "### Partners Involved").
+     The 5 elements above are a CONTENT CHECKLIST that must be woven into the paragraphs
+     under the thematic subheading — they are NOT titles, they are NOT bullet points,
+     and they must NOT appear as visible headings or labels in the final output.
+     ANTI-FABRICATION: The subheading and all content must be grounded ONLY in facts
+     from the FactSheet. Do NOT invent outcomes, metrics, or strategic claims not
+     supported by the FactSheet data.
 
   d) CAUSAL EVIDENCE MANDATE (CRITICAL): At the end of EACH initiative description, you MUST
      explicitly state the causal mechanism linking that initiative to its outcome. The structure
