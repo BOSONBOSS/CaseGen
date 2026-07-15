@@ -62,7 +62,7 @@ GENTLE NARRATIVE GUIDELINES (CRITICAL):
 3. Subheadings (Intervention section): Use descriptive markdown subheadings (###) to clearly organize and separate distinct interventions or strategic initiatives.
 4. Causal Mechanisms (Results section): When describing outcomes, explicitly explain the specific mechanism of HOW the intervention led to the result (don't just state the correlation).
 5. Synthesis (Learnings section): Conclude with a final synthesis paragraph that reconnects to the opening thesis, placed immediately before any discussion questions.
-6. Quote Integrity: The opening quote MUST be taken verbatim from the key_quotes field in the FactSheet. Do NOT paraphrase, adapt, or invent any quote.
+6. Quote Integrity: The opening quote MUST be taken verbatim from the key_quotes field in the FactSheet. Do NOT paraphrase, adapt, or invent any quote. CRITICAL: Use EXACTLY the speaker name as recorded in the FactSheet key_quotes — character-for-character. If the speaker is listed as "Kiichiro Toyoda (Founder)", write "Kiichiro Toyoda (Founder)", NOT "Akio Toyoda" or any other current executive. NEVER transfer a quote from its original speaker to a different person under any circumstances.
 7. MUTUAL EXCLUSIVITY: Do not repeat the same facts, initiatives, or historical context across multiple sections. If an initiative or target is detailed in the Background or Industry Context, do not re-explain it in the Challenge or Interventions sections. You may reference it briefly if structurally necessary, but each section must primarily introduce new information.
 
 Template sections (minimum word targets — there is NO maximum; write as much as the data warrants):
@@ -259,9 +259,13 @@ WHY that specific approach was chosen, and HOW it was executed.
      paragraph that transforms a list of actions into a coherent strategy.
 
   b) NAMED PROTAGONISTS: Every major initiative must be attributed to a named decision-maker
-     from the FactSheet's key_people. Do not write "the company decided" — use the actual
-     name and title from key_people (e.g. "[CEO Name] directed..." or "[Chairman Name] championed...").
-     If no named individual is in the FactSheet for a decision, attribute it to the specific team or function.
+     from the FactSheet's key_people — but ONLY if the FactSheet explicitly states that person
+     led, directed, or championed that initiative. Do NOT assume that a CEO or Chairman championed
+     every initiative simply because they are the most senior person listed. If the FactSheet does
+     NOT name a specific individual as the driver of an initiative, attribute it to the relevant
+     team, division, or organisation (e.g. "Toyota's engineering team developed..." or "the
+     company's quality management division launched..."). BANNED: "CEO/Chairman X championed
+     [initiative]" unless the FactSheet explicitly states this.
 
   c) INITIATIVE DEEP-DIVES: For each strategic initiative (especially those in
      strategic_initiatives), write a dedicated sub-section that explains:

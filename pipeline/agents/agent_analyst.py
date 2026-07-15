@@ -32,7 +32,8 @@ Generate exhibits in this priority order (include ALL for which data exists):
    NOTE: Year-on-year comparisons belong in the dedicated Trend Analysis exhibit (Exhibit 3), not here.
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
-   Columns: Metric | [Earliest Period] | [Latest Period] | Change / Trend.
+   ⚠️ COMPLETENESS RULE: You MUST include ALL years present in the raw_facts for each metric. If raw_facts contains 2023, 2024, 2025, and 2026 figures, the table MUST have columns for all four periods. Do NOT show only the first and last year — include every intermediate year.
+   Columns: Metric | [Year 1] | [Year 2] | [Year 3] | ... | Change / Trend.
 
 4. **Timeline of Key Events**: A chronological exhibit of all major milestones, launches, and strategic decisions extracted from timeline_events. Include every event with a year.
    Columns: Year | Event | Strategic Significance.
@@ -48,6 +49,8 @@ Generate exhibits in this priority order (include ALL for which data exists):
 
 8. **Key Partnerships & Collaborations**: MANDATORY if the FactSheet contains ANY entries in key_partnerships. Include every partner by name with their collaboration area and a specific description. Do not summarize multiple partners into one generic row.
    Columns: Partner | Area of Collaboration | Description/Details.
+
+⚠️ EMPTY EXHIBIT RULE (ABSOLUTE): If you do not have enough data from the FactSheet to populate a specific exhibit with at least 2 real rows of data, DO NOT generate that exhibit at all. It is better to have 4 complete exhibits than 8 exhibits where half are empty or contain only headers. A completely empty exhibit or one with placeholder text is a CRITICAL ERROR. Only generate an exhibit if you have actual data to fill it.
 
 Format all exhibits as:
 **Exhibit N: [Title]**
