@@ -308,6 +308,24 @@ WHY that specific approach was chosen, and HOW it was executed.
      because [mechanism — i.e. how and why this action produced this specific result]."
      If the FactSheet does NOT provide a causal link between an initiative and an outcome,
      state the initiative and its intended goal separately. DO NOT invent causation.
+
+  e) TEMPORAL CAUSATION CHECK (CRITICAL — prevents chronological errors):
+     Before attributing any outcome to an initiative, you MUST verify the timeline:
+     - Identify the LAUNCH YEAR of the initiative (from timeline_events or strategic_initiatives).
+     - Identify the YEAR of the outcome (from outcomes or raw_facts).
+     - If the outcome occurred BEFORE the initiative launched, that initiative CANNOT be its cause.
+       Instead, you MUST either (a) attribute the outcome to an earlier intervention that DID
+       exist at the time, or (b) frame the initiative as a FUTURE DRIVER: "While [Outcome X]
+       was achieved through [earlier mechanism], [Initiative Y] — launched in [Year] — is
+       positioned to sustain and accelerate these gains going forward."
+     EXAMPLE OF A BANNED CAUSAL CLAIM:
+       "Woven City [launched 2026] drove Lexus sales growth [2023-2025]." — BANNED.
+       An initiative cannot cause outcomes that occurred before it existed.
+     EXAMPLE OF A CORRECT REFRAME:
+       "Lexus sales grew from 824,258 in 2023 to 882,231 in 2025, driven by targeted product
+       development and brand expansion initiatives. Woven City — launched in 2026 — is designed
+       to sustain this trajectory by providing a real-world innovation platform for next-generation
+       mobility solutions."
 """,
 
         "results": """

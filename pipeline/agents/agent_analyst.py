@@ -30,6 +30,15 @@ Generate exhibits in this priority order (include ALL for which data exists):
    This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available) and regional breakdowns. Include ALL relevant rows — do not drop rows to make room.
    Columns: Metric/Segment | Units/Value | Period.
    NOTE: Year-on-year comparisons belong in the dedicated Trend Analysis exhibit (Exhibit 3), not here.
+   ⚠️ BRAND vs GRAND TOTAL RULE (CRITICAL): If the FactSheet contains figures for multiple
+   brands or sub-entities (e.g. Toyota+Lexus, Daihatsu, Hino), you MUST include BOTH the
+   individual brand/sub-entity rows AND the overall group grand total as separate rows.
+   NEVER present a brand subtotal (e.g. Toyota+Lexus worldwide sales) as the company-wide
+   grand total — they are different figures. If a "Total" or "Grand Total" figure exists
+   in raw_facts that is LARGER than any individual brand figure, that is the true group total
+   and must appear as its own clearly-labelled row (e.g. "Total Group (incl. Daihatsu, Hino)").
+   BANNED: Using a single-brand subtotal as the group-wide total in any exhibit row or label.
+
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
    ⚠️ COMPLETENESS RULE: You MUST include ALL years present in the raw_facts for each metric. If raw_facts contains 2023, 2024, 2025, and 2026 figures, the table MUST have columns for all four periods. Do NOT show only the first and last year — include every intermediate year.
