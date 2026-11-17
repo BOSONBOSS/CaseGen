@@ -62,20 +62,23 @@ def _scrub_hallucinations(text: str, fact_sheet: FactSheet) -> str:
 
     scrubbed = _HALLUCINATION_RE.sub(_should_remove, text)
 
-    # ── NUCLEAR FALLBACK ──────────────────────────────────────────────────────
-    # Even if '¥30 trillion' somehow entered the FactSheet whitelist through an
-    # Agent 1 hallucination, we unconditionally strip any sentence that contains
-    # the exact phrase "30 trillion". This is hardcoded Python — the LLM cannot
-    # override it regardless of what it outputs.
-    _THIRTY_TRILLION_RE = re.compile(
-        r"[^.!?\n]*?\b30\s*trillion\b[^.!?\n]*[.!?]?",
-        re.IGNORECASE,
-    )
-    def _nuclear_strip(m: re.Match) -> str:
-        print(f"[Agent 4] 💥 NUCLEAR SCRUB — removed '30 trillion' sentence: {m.group()[:120]!r}")
-        return ""
-    scrubbed = _THIRTY_TRILLION_RE.sub(_nuclear_strip, scrubbed)
-    # ─────────────────────────────────────────────────────────────────────────
+    # -- DYNAMIC NUCLEAR FALLBACK -----------------------------------------------
+    # Replace the old hardcoded '30 trillion' ban (which was Toyota-specific)
+    # with a company-agnostic check: if the FactSheet has no revenue OR the
+    # revenue is NOT itself in the trillion range, ban any sentence that claims
+    # a trillion-scale figure (since it must be fabricated for this company).
+    revenue_str = (fact_sheet.revenue or "").lower()
+    revenue_is_trillion_scale = "trillion" in revenue_str
+    if not revenue_is_trillion_scale:
+        _FABRICATED_TRILLION_RE = re.compile(
+            r"[^.!?\n]*?\b\d+[\d,.]*\s*trillion\b[^.!?\n]*[.!?]?",
+            re.IGNORECASE,
+        )
+        def _dynamic_nuclear_strip(m: re.Match) -> str:
+            print(f"[Agent 4] DYNAMIC NUCLEAR SCRUB - removed implausible trillion-scale sentence: {m.group()[:120]!r}")
+            return ""
+        scrubbed = _FABRICATED_TRILLION_RE.sub(_dynamic_nuclear_strip, scrubbed)
+    # ---------------------------------------------------------------------------
 
     # Clean up any double blank lines left behind
     scrubbed = re.sub(r"\n{3,}", "\n\n", scrubbed)

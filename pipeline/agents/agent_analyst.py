@@ -9,13 +9,14 @@ _ANALYST_PROMPT = """
 You are a business case study analyst. Generate comprehensive exhibits and discussion questions from the FactSheet ONLY.
 
 EXHIBIT RULES:
-- Generate MULTIPLE focused, data-rich exhibits. Target 4–7 exhibits total — more is better than fewer.
+- Generate MULTIPLE focused, data-rich exhibits. Target 6 highly detailed exhibits total.
 - Each exhibit must be a properly formatted Markdown table with a bold heading above it.
 - Do NOT invent numbers. Use ONLY data from the FactSheet.
+- NO COMPUTATION RULE (ABSOLUTE): NEVER write a number into any exhibit cell that does not appear VERBATIM in the FactSheet raw_facts. This includes totals, subtotals, aggregates, and averages. If a grand total figure does not exist as a single explicit number in raw_facts, do NOT write one — omit the total row entirely or label it "See individual rows above". NEVER sum two or more figures from raw_facts to produce a new number. BANNED EXAMPLE: if raw_facts contains Toyota+Lexus: 4,140,444 and you cannot find an explicit grand total figure in raw_facts, you MUST NOT write any other number for the total.
 - If a category has no data, skip that exhibit. Do NOT generate empty tables.
 - DO NOT generate purely qualitative exhibits (no Quotes, no generic Key People lists).
 - TEMPORAL METADATA RULE (CRITICAL): If a raw fact includes a time qualifier (e.g. "Q1", "Jan–May 2026", "YTD", "Cumulative", "FY2025"), that qualifier MUST appear verbatim in the "Context" or "Period" column of the table. Never strip or omit the time period from any data point.
-- DATA PRECISION RULE: Copy all numbers exactly as they appear in raw_facts. Never round, abbreviate, or convert units (e.g. write 10,823,000 not ~10.8M).
+- DATA PRECISION RULE: Copy numbers exactly as they appear in raw_facts. Never round or convert units (e.g. write 10,823,000 not ~10.8M) UNLESS the source data itself explicitly uses '~' or '>' (e.g. '>50%', '~200'). If the source uses symbols, you may use them.
 - SEGMENT SCOPE RULE (CRITICAL): If a raw fact is scoped to a segment, brand, region, or country (e.g. "electrified vehicles", "Lexus", "Vietnam"), that scope MUST appear in the Metric or Context column. NEVER present a segment/country figure or growth rate as a company-wide total.
 {privacy_rule}
 {brevity_rule}
@@ -26,12 +27,24 @@ Generate exhibits in this priority order (include ALL for which data exists):
    ⚠️ CRITICAL: If there are no explicit financial figures (revenue/profit/margins) in the FactSheet, SKIP this exhibit. Do NOT generate a row that says "Revenue: Significant" or any vague placeholder.
    Columns: Metric | Value | Period | Context.
 
-2. **Sales & Production Metrics**: All unit sales, production volumes, market share, and deployment figures.
-   This MUST include vehicle/product counts, regional breakdowns, and year-on-year comparisons if available.
-   Columns: Metric | Value | Period | Context.
+2. **Sales, Production & Product Breakdown**: All unit sales, production volumes, market share, and deployment figures.
+   This MUST include vehicle/product counts (including sub-category breakdowns like HEV vs BEV vs PHEV if available) and regional breakdowns. Include ALL relevant rows — do not drop rows to make room.
+   Columns: Metric/Segment | Units/Value | Period.
+   NOTE: Year-on-year comparisons belong in the dedicated Trend Analysis exhibit (Exhibit 3), not here.
+   ⚠️ BRAND vs GRAND TOTAL RULE (CRITICAL): If the FactSheet contains figures for multiple
+   brands or sub-entities (e.g. Toyota+Lexus, Daihatsu, Hino), you MUST include BOTH the
+   individual brand/sub-entity rows AND the overall group grand total as separate rows.
+   NEVER present a brand subtotal (e.g. Toyota+Lexus worldwide sales) as the company-wide
+   grand total — they are different figures. If a "Total" or "Grand Total" figure exists
+   in raw_facts that is LARGER than any individual brand figure, that is the true group total
+   and must appear as its own clearly-labelled row (e.g. "Total Group (incl. Daihatsu, Hino)").
+   BANNED: Using a single-brand subtotal as the group-wide total in any exhibit row or label.
+
 
 3. **Trend Analysis / Year-on-Year Comparison**: If the FactSheet contains data for more than one year or period, generate a dedicated trend table showing how key metrics changed over time. This is a mandatory exhibit if ANY multi-year or multi-period data exists.
-   Columns: Metric | [Earliest Period] | [Latest Period] | Change / Trend.
+   ⚠️ COMPLETENESS RULE: You MUST include ALL years present in the raw_facts for each metric. If raw_facts contains 2023, 2024, 2025, and 2026 figures, the table MUST have columns for all four periods. Do NOT show only the first and last year — include every intermediate year.
+   ⚠️ LIKE-FOR-LIKE PERIOD RULE (CRITICAL): NEVER compute or display a percentage change between a partial-year period and a full-year period. A partial-year figure (e.g. Jan–May 2026, Q1, YTD) can ONLY appear in a trend column alongside other figures from the equivalent partial period of prior years (e.g. Jan–May 2025). If the equivalent prior partial-year figure does NOT exist in raw_facts, show the partial-year figure as a standalone column WITHOUT a percentage change — label it as "Jan–May 2026 (partial)" and leave the Change/Trend cell as "N/A — partial year". BANNED: Computing -3.53% by comparing Jan–May 2026 sales to full-year 2023 sales. These are different-duration periods and cannot be directly compared.
+   Columns: Metric | [Year 1] | [Year 2] | [Year 3] | ... | Change / Trend.
 
 4. **Timeline of Key Events**: A chronological exhibit of all major milestones, launches, and strategic decisions extracted from timeline_events. Include every event with a year.
    Columns: Year | Event | Strategic Significance.
@@ -42,8 +55,15 @@ Generate exhibits in this priority order (include ALL for which data exists):
 6. **Cost / Process Breakdown**: If there is data about operational efficiency, cost reductions, supply chain metrics, or process improvements.
    Columns: Process/Area | Metric | Improvement/Impact | Period.
 
-7. **Strategic Investments & Targets**: Any data on investments, budget allocations, or quantifiable sustainability/technology targets.
+7. **Strategic Investments & Targets**: MANDATORY if the FactSheet contains ANY strategic targets, GHG reduction commitments, technology goals, or investment figures. Do NOT skip this exhibit if such data exists — even partial data warrants inclusion.
    Columns: Area/Initiative | Target/Investment | Deadline/Impact.
+
+8. **Key Partnerships & Collaborations**: MANDATORY if the FactSheet contains ANY entries in key_partnerships. Include every partner by name with their collaboration area and a specific description. Do not summarize multiple partners into one generic row.
+   Columns: Partner | Area of Collaboration | Description/Details.
+
+⚠️ EMPTY EXHIBIT RULE (ABSOLUTE): If you do not have enough data from the FactSheet to populate a specific exhibit with at least 2 real rows of data, DO NOT generate that exhibit at all. It is better to have 4 complete exhibits than 8 exhibits where half are empty or contain only headers. A completely empty exhibit or one with placeholder text is a CRITICAL ERROR. Only generate an exhibit if you have actual data to fill it.
+
+⚠️ SCHEMA LOCK RULE (ABSOLUTE): You MUST ONLY generate exhibits whose TYPE and TITLE match one of the 8 defined exhibit types above (Financial Performance, Sales & Product Breakdown, Trend Analysis, Timeline, Market Comparison, Cost/Process Breakdown, Strategic Investments, Key Partnerships). Do NOT invent a new exhibit type, a custom title, or a new exhibit slot that is not in this list. If a topic does not fit any of the 8 types, include the data in the most relevant existing exhibit rather than creating a new one. BANNED: Creating an exhibit called "Anticipated Future Sales", "Key Challenges", "Interventions", or any other title not on the defined list.
 
 Format all exhibits as:
 **Exhibit N: [Title]**

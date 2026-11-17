@@ -17,7 +17,14 @@ import re
 # Any file whose name matches these patterns will be tagged HISTORICAL_REFERENCE_ONLY,
 # preventing the LLM from treating its financial figures as current data.
 _HISTORICAL_BOOK_PATTERNS = re.compile(
-    r"(production.system|tps|lean.thinking|machine.that.changed|toyota.way|kaizen|monozukuri|gemba)",
+    r"("
+    # Toyota-specific management books
+    r"production.system|tps|lean.thinking|machine.that.changed|toyota.way|kaizen|monozukuri|gemba"
+    # Generic historical/conceptual book title patterns
+    r"|the.making.of|history.of|story.of|origin.of|biography|memoir|chronicle"
+    r"|management.classic|business.classic|case.study.book|textbook|handbook"
+    r"|how.to|principles.of|art.of|science.of|philosophy.of"
+    r")",
     re.IGNORECASE,
 )
 
@@ -61,7 +68,35 @@ def _classify_source(filename: str) -> str:
     )
 
 
-def chunk_master_transcript(master_transcript, chunk_size=2000, chunk_overlap=300):
+def _is_boilerplate(chunk: str) -> bool:
+    """
+    Detects if a chunk is purely legal jargon, table of contents, or accounting boilerplate.
+    Filtering these out saves API calls and prevents the LLM from getting distracted by
+    legal definitions or index numbers.
+    """
+    text = chunk.lower()
+    
+    # 1. Extremely short chunks (usually just page numbers or stray formatting)
+    if len(text.strip()) < 50:
+        return True
+        
+    # 2. Dense legal/safe-harbor disclaimers
+    if "forward-looking statements" in text and ("safe harbor" in text or "disclaimer" in text or "anticipate" in text):
+        return True
+        
+    # 3. Independent Auditor's Reports (pure accounting legalese)
+    if "independent auditor's report" in text or "report of independent registered public accounting firm" in text:
+        return True
+        
+    # 4. Pure Table of Contents or Indexes
+    # (Chunks with a very high density of numbers separated by dots/spaces)
+    if "table of contents" in text and len(re.findall(r"\.{3,}|\s\d+\s*\n", text)) > 5:
+        return True
+        
+    return False
+
+
+def chunk_master_transcript(master_transcript, chunk_size=4000, chunk_overlap=400):
     """
     Splits the master transcript into overlapping chunks for LLM processing.
 
@@ -106,14 +141,21 @@ def chunk_master_transcript(master_transcript, chunk_size=2000, chunk_overlap=30
             authority = _classify_source(filename)
             # Split this file's text into chunks INDEPENDENTLY (no cross-file splicing)
             file_chunks = splitter.split_text(str(text))
-            # Prepend [SOURCE FILE] + [AUTHORITY] to EVERY individual chunk
-            # so the tag is never split away from its data during batch processing
-            tagged_chunks = [
-                f"[SOURCE FILE: {filename}]\n[AUTHORITY: {authority}]\n\n{chunk}"
-                for chunk in file_chunks
-            ]
+            
+            tagged_chunks = []
+            dropped = 0
+            for chunk in file_chunks:
+                if _is_boilerplate(chunk) and "AUTHORITATIVE_DATA" not in authority:
+                    dropped += 1
+                    continue
+                # Prepend [SOURCE FILE] + [AUTHORITY] to EVERY individual chunk
+                # so the tag is never split away from its data during batch processing
+                tagged_chunks.append(
+                    f"[SOURCE FILE: {filename}]\n[AUTHORITY: {authority}]\n\n{chunk}"
+                )
+                
             all_chunks.extend(tagged_chunks)
-            print(f"[Chunker] {filename}: {len(file_chunks)} chunks | {authority[:50]}...")
+            print(f"[Chunker] {filename}: {len(tagged_chunks)} chunks kept | {dropped} boilerplate dropped | {authority[:50]}...")
         print(
             f"[Chunker] Total: {len(all_chunks)} tagged chunks "
             f"from {len(master_transcript)} source files"

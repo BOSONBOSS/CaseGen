@@ -4,6 +4,7 @@ Two-pass: batch extraction → synthesis → Pydantic validation with LLM retry.
 """
 
 import json
+import concurrent.futures
 from typing import Callable, Optional
 
 from pydantic import ValidationError
@@ -20,13 +21,13 @@ than to miss a fact. Each field below MUST be populated if the text supports it.
 EXTRACTION RULES:
 1. company_name: Look in title, header, "About Us", Chairman's message.
 2. revenue: Look ONLY for TOTAL company financial revenue, turnover, or total sales expressed in currency (e.g. ¥ trillion, $ billion, ₹ crore). Do NOT extract operating income, profit, or revenue for a single business division/segment. Include currency symbol, unit (crore/million/billion/%), and year. If multiple figures exist, put the total company figure here. CRITICAL: Do NOT confuse unit sales volume (number of vehicles, products, or units sold) with financial revenue. If the text only provides sales in units (e.g. '10.3 million vehicles sold'), leave revenue as null — that is a production/sales count, NOT a financial figure.
-3. raw_facts: List EVERY numerical or quantitative fact you can find — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. Include the context for each number AND the year it refers to (e.g. "2024 worldwide sales: 10,385,902 units"). RECENCY RULE: If the data source contains figures for multiple years (e.g. a column per year), you MUST prioritise the most recent year's figures. The most recent year column will be marked with "⚠️ MOST RECENT DATA COLUMN" in the source text — use THOSE figures as the primary facts. Always label each figure with its year so the case study does not confuse historical data with current performance. Do NOT skip any number. ARITHMETIC BAN: If a column is marked as "⚠️ WARNING: PARTIAL YEAR" or "CUMULATIVE" or "YTD", extract the number exactly as written — NEVER multiply, extrapolate, or annualise it to guess a full-year figure. Record it with a clear label such as "Jan–May 2026 cumulative worldwide sales: 4,140,444 units". COPY-PASTE RULE (CRITICAL): When extracting numbers from tables or spreadsheets, you MUST copy every figure EXACTLY as it appears in the source — character-for-character. NEVER round, abbreviate, convert, or approximate. For example, if the source says 10,823,000 you must write 10,823,000, NOT 10.59M or ~10.8M. If the source says 4,140,444 you must write 4,140,444, NOT 4.14M. Temporal qualifiers (e.g. "Q1 FY2025", "Jan–May 2026", "YTD", "Cumulative") MUST be copied verbatim into each fact string as a prefix so downstream agents know the exact reporting period.
+3. raw_facts: List numerical or quantitative facts — percentages, production numbers, employee counts, unit sales, market share, capacity figures, rankings, ratings. VOLUME CONTROL (CRITICAL): When processing large spreadsheets or tables, prioritise top-level metrics (e.g., company-wide totals), key geographic/regional breakdowns, and major product/segment categories (e.g., core business lines, major product types). Skip minor, granular sub-segment data to ensure the most strategic figures are captured. Include the context for each number AND the year it refers to (e.g. "2024 worldwide sales: 10,385,902 units"). RECENCY RULE: If the data source contains figures for multiple years (e.g. a column per year), you MUST prioritise the most recent year's figures. The most recent year column will be marked with "⚠️ MOST RECENT DATA COLUMN" in the source text — use THOSE figures as the primary facts. Always label each figure with its year so the case study does not confuse historical data with current performance. Do NOT skip any number. ARITHMETIC BAN: If a column is marked as "⚠️ WARNING: PARTIAL YEAR" or "CUMULATIVE" or "YTD", extract the number exactly as written — NEVER multiply, extrapolate, or annualise it to guess a full-year figure. Record it with a clear label such as "Jan–May 2026 cumulative worldwide sales: 4,140,444 units". COPY-PASTE RULE (CRITICAL): When extracting numbers from tables or spreadsheets, you MUST copy every figure EXACTLY as it appears in the source — character-for-character. NEVER round, abbreviate, convert, or approximate. For example, if the source says 10,823,000 you must write 10,823,000, NOT 10.59M or ~10.8M. If the source says 4,140,444 you must write 4,140,444, NOT 4.14M. Temporal qualifiers (e.g. "Q1 FY2025", "Jan–May 2026", "YTD", "Cumulative") MUST be copied verbatim into each fact string as a prefix so downstream agents know the exact reporting period.
 4. timeline_events: List EVERY dated event, milestone, product launch, policy change, or achievement mentioned. Each entry must have a year (even approximate like "2023") and a clear description.
 5. challenges: List every CURRENT problem, obstacle, difficulty, or risk mentioned (e.g. operational, financial, regulatory). CRITICAL: Do NOT list historical challenges from decades ago (e.g. 1950s labor disputes, 1970s oil crisis) as current challenges. If the text mentions them purely as historical background, exclude them or place them in timeline_events, not here.
 6. interventions: List every initiative, programme, investment, technology, process, or strategic change the company took in response to challenges. CRITICAL CAUSAL RULE: For each intervention, you MUST also capture (a) the strategic rationale — WHY this specific approach was chosen over alternatives, and (b) the mechanism — HOW it is expected to work. Format each entry as a SINGLE STRING (do not use a nested object/dict): "[Initiative name]: [what it is]. Rationale: [why chosen]. Mechanism: [how it works]. Expected outcome: [what it aims to achieve]."
 7. outcomes: List every measurable or stated result, achievement, improvement, or outcome — including production milestones, market performance, and financial results. For each outcome, state the CAUSAL LINK in the same SINGLE STRING: which specific intervention drove this result and by what mechanism.
-8. key_quotes: Extract ALL direct quotes (text inside quotation marks) from leadership, employees, or official statements. Include the full quote text and speaker name with title.
-9. key_people: All CURRENT, named leaders/executives with their exact title. Only include people who are currently active at the company. Do NOT list historical figures, founders who passed away, or people who are no longer employed at the company. If a person is mentioned purely in a historical context (e.g. the creator of a business system who is no longer alive), exclude them.
+8. key_quotes: Extract direct quotes from leadership, employees, or official statements. CRITICAL VERBATIM RULE: Only extract text that appears INSIDE QUOTATION MARKS in the source document (e.g., "exact text here"). Do NOT extract reported speech, paraphrased summaries, or indirect statements — even if they are attributed to a named speaker. For example, if the source says: 'Koji Sato stated that the company would pursue carbon neutrality' — this is INDIRECT speech and must NOT be added to key_quotes. Only extract it if it reads: Koji Sato said, "[exact words here]".' Copy the quote text EXACTLY as it appears between the quotation marks — character-for-character. Do NOT shorten, combine, or rephrase. IF key_quotes IS EMPTY OR CONTAINS NO SUITABLE QUOTE: Do NOT invent a quote. Instead, provide a fallback factual statement or striking data point from raw_facts to be used as an opener.
+9. key_people: All CURRENT, named leaders/executives with their exact title. Only include people who are currently active at the company. Do NOT list historical figures, founders who passed away, or people who are no longer employed at the company. If a person is mentioned purely in a historical context (e.g. the creator of a business system who is no longer alive), exclude them from key_people. NOTE: Excluding a person from key_people does NOT mean their quotes should be re-attributed — see rule 8.
 10. themes: Up to 5 STRATEGIC topics reflected in this text.
 11. tagged_facts: For EVERY fact in raw_facts, challenges, interventions, and outcomes, create a tagged_facts entry linking that fact to a theme.
 12. strategic_initiatives: List EVERY named programme, brand launch, technology bet, or major strategic project (e.g. "Woven City", "ENGINE ReBORN", "bZ3X BEV launch"). Include its name, a rich description with all available details, the approximate year, and — critically — (a) the strategic rationale (WHY this initiative exists, what threat or opportunity it addresses), (b) the mechanism (HOW it works, not just what it is), and (c) which specific partners, technologies, or investments it relies on.
@@ -37,8 +38,9 @@ EXTRACTION RULES:
     - If AUTHORITY contains 'AUTHORITATIVE_DATA': All numerical figures are primary source facts. Extract them exactly.
     - If AUTHORITY contains 'AUTHORITATIVE_REPORT': Financial and strategic figures are current. Trust them.
     - If AUTHORITY is missing or 'SUPPORTING_SOURCE': Extract qualitative facts only; do not use financial figures as current revenue.
-16. SEGMENT SCOPE RULE (CRITICAL): Spreadsheet sections are labelled with their scope (e.g. "[Sales of Electrified vehicle]", "[Sales of Lexus]", "[Sales by country or region]", "Metric (scope: ...)"). A figure from a segment, brand, or country scope must ALWAYS carry that scope in the fact string (e.g. "Vietnam 2024 YoY growth: 34.97%", "Vietnam sales 2024: 74,206 units"). NEVER present a segment, brand, country, or percentage-change figure as a company-wide/total figure. Rows marked "(YoY % change ... values are PERCENTAGES, not units)" are growth rates, NEVER unit counts or totals. CRITICAL EXAMPLE OF A BANNED MISATTRIBUTION: A row that says "34.97%" in the "Sales by country or region" sheet under the YoY column for Vietnam in 2024 MUST be recorded as "Vietnam 2024 YoY sales growth: 34.97%" — it MUST NEVER be written as "Toyota's worldwide sales grew 34.97% in 2023" or any company-wide claim. Any YoY % row from a country/region section MUST be labelled with the EXACT country name and year it belongs to.
+16. SEGMENT SCOPE RULE (CRITICAL): Spreadsheet sections are labelled with their scope (e.g. "[Sales of Electrified vehicle]", "[Sales by Brand]", "[Sales by country or region]", "Metric (scope: ...)"). A figure from a segment, brand, or country scope must ALWAYS carry that scope in the fact string (e.g. "[Country] [Year] YoY sales growth: [X%]", "[Country] sales [Year]: [N] units"). NEVER present a segment, brand, country, or percentage-change figure as a company-wide/total figure. Rows marked "(YoY % change ... values are PERCENTAGES, not units)" are growth rates, NEVER unit counts or totals. CRITICAL EXAMPLE OF A BANNED MISATTRIBUTION: A YoY % row in a "Sales by country or region" sheet for a specific country MUST always be labelled with that EXACT country name and year (e.g. "[Country] [Year] YoY sales growth: [X%]"). It MUST NEVER be written as the company's worldwide sales growth or presented as a global figure. Any YoY % row from a country/region section MUST be labelled with the EXACT country name and year it belongs to.
 17. ABSOLUTE ARITHMETIC BAN: NEVER add, subtract, multiply, or divide figures from the source to create a new number. NEVER sum regional figures (e.g. Inside Japan + Outside Japan) to produce a worldwide total unless that worldwide total is explicitly stated as a single cell/number in the source. If you see 'Inside Japan: 655,859' and 'Outside Japan: 3,484,585', do NOT output '4,140,444' for worldwide unless that exact number appears explicitly as a worldwide total in the source.
+18. FUTURE DATES PRECISION RULE (CRITICAL): When extracting future targets, forecasts, or planned timelines, you MUST copy the year EXACTLY as written in the source. NEVER round, approximate, or substitute a year for another. Examples of BANNED behaviour: if the source says "by 2030", you MUST write "2030", NOT "2025" or "2028". If the source says "commercialization in 2027 or 2028", you MUST write "2027-2028", NOT "2026" or "2027". If the source says "before the end of the decade", write that phrase verbatim — do NOT convert it to a specific year. Treat year precision the same way as number precision: character-for-character accuracy is required.
 
 CRITICAL: Do NOT leave timeline_events, challenges, interventions, outcomes, key_quotes, raw_facts, strategic_initiatives, or key_partnerships as empty arrays if there is ANY relevant content in the text. These are the most important fields.
 
@@ -344,7 +346,7 @@ def _validate_with_retry(merged: dict, partials: list[dict] = None, max_retries:
 
 def run_agent_1(
     chunks: list[str],
-    batch_size: int = 5,
+    batch_size: int = 10,
     on_progress: Optional[Callable[[int, int], None]] = None,
 ) -> FactSheet:
     """
@@ -359,13 +361,25 @@ def run_agent_1(
     print(f"[Agent 1] Pass 1: {total} chunks → {total_batches} batches")
 
     partials = []
+    batches_to_run = []
     for i in range(0, total, batch_size):
         batch = chunks[i: i + batch_size]
         batch_num = (i // batch_size) + 1
-        result = _process_batch(batch, batch_num)
-        partials.append(result)
-        if on_progress:
-            on_progress(batch_num, total_batches)
+        batches_to_run.append((batch, batch_num))
+
+    completed_count = 0
+    # Use max_workers=3 as a strict speed limit to prevent 429 Too Many Requests errors
+    # on free API tiers. This still cuts total wait time by ~66% vs sequential processing.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(_process_batch, b, num): num for b, num in batches_to_run}
+        
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            partials.append(result)
+            completed_count += 1
+            if on_progress:
+                on_progress(completed_count, total_batches)
+                
     non_empty = sum(1 for p in partials if p)  # count batches that returned actual data
     print(f"[Agent 1] Pass 1 complete: {non_empty}/{total_batches} batches returned data")
 

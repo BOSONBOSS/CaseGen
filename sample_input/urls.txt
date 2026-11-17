@@ -2,3 +2,5 @@ URLs:
 
 https://www.toyota-europe.com/about-us/toyota-vision-and-philosophy/toyota-production-system
 https://www.toyota-global.com/company/history_of_toyota/75years/data/automotive_business/production/system/change.html
+
+python -c "import sqlite3; conn = sqlite3.connect('case_history.db'); print(conn.execute('SELECT * FROM cases').fetchall())" 

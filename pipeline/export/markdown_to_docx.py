@@ -70,6 +70,10 @@ def markdown_to_docx(markdown: str) -> bytes:
                 p.runs[0].font.name = "Times New Roman"
         elif line.startswith("### "):
             p = doc.add_heading(line[4:].strip(), level=3)
+        elif line.startswith("#### "):
+            p = doc.add_heading(line[5:].strip(), level=4)
+        elif line.startswith("##### "):
+            p = doc.add_heading(line[6:].strip(), level=5)
         elif line.strip().startswith("> "):
             # Blockquote: strip > marker and any markdown italic asterisks, render italic
             raw = line.strip()[2:].strip()

@@ -42,6 +42,10 @@ def _markdown_to_html(markdown: str) -> str:
             html_parts.append(f"<h2>{line[3:]}</h2>")
         elif line.startswith("### "):
             html_parts.append(f"<h3>{line[4:]}</h3>")
+        elif line.startswith("#### "):
+            html_parts.append(f"<h4>{line[5:]}</h4>")
+        elif line.startswith("##### "):
+            html_parts.append(f"<h5>{line[6:]}</h5>")
         elif line.strip().startswith("> "):
             raw = line.strip()[2:].strip()
             # Remove markdown italic markers
