@@ -79,12 +79,18 @@ class TestAuthenticationModule(unittest.TestCase):
         )
 
     def test_registration_and_profile_flow(self):
-        """Verify new user registration, duplicate detection, and profile fetching."""
-        test_user = "student_evaluator_2026"
+        """Verify new user registration, email validation, duplicate detection, and profile fetching."""
+        test_user = self.TEST_REG_USER
         test_pass = "SecurePass@2026"
+        test_email = "evaluator@casegen.edu"
 
-        # Register
-        res = register_user(test_user, test_pass, "Evaluator Person", "240999")
+        # Invalid email rejected
+        bad_email = register_user(test_user, test_pass, "Evaluator Person", "not-an-email")
+        self.assertIsInstance(bad_email, str, "Invalid email should be rejected")
+        self.assertIn("email", bad_email.lower())
+
+        # Register with valid email
+        res = register_user(test_user, test_pass, "Evaluator Person", test_email)
         self.assertTrue(res, f"Registration failed: {res}")
 
         # Login with newly registered user
@@ -98,10 +104,10 @@ class TestAuthenticationModule(unittest.TestCase):
         self.assertIsNotNone(info)
         self.assertEqual(info["username"], test_user)
         self.assertEqual(info["full_name"], "Evaluator Person")
-        self.assertEqual(info["student_id"], "240999")
+        self.assertEqual(info["email"], test_email)
 
         # Duplicate username attempt
-        dup_res = register_user(test_user, "AnotherPass123", "Dup Person", "240889")
+        dup_res = register_user(test_user, "AnotherPass123", "Dup Person", "dup@casegen.edu")
         self.assertIsInstance(dup_res, str, "Duplicate username was not rejected")
         self.assertIn("already", dup_res.lower())
 

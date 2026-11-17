@@ -12,6 +12,7 @@ from pipeline.persistence.auth import (
     verify_login,
     register_user,
     get_user_info,
+    render_sidebar_auth,
 )
 
 st.set_page_config(
@@ -129,7 +130,7 @@ if st.session_state.get("show_auth", False) and not _is_authenticated:
             with tab_register:
                 with st.form("register_form"):
                     reg_fullname = st.text_input("Full Name", placeholder="e.g. Ananshi Sharma")
-                    reg_studentid = st.text_input("Student ID", placeholder="e.g. 240377")
+                    reg_email = st.text_input("Email ID", placeholder="e.g. ananshi@example.com")
                     reg_username = st.text_input("Username", placeholder="Choose a username")
                     reg_password = st.text_input("Password", type="password", placeholder="At least 6 characters")
                     reg_submitted = st.form_submit_button("Create Account", type="primary", use_container_width=True)
@@ -137,7 +138,7 @@ if st.session_state.get("show_auth", False) and not _is_authenticated:
                 if reg_submitted:
                     if not all([
                         reg_fullname.strip(),
-                        reg_studentid.strip(),
+                        reg_email.strip(),
                         reg_username.strip(),
                         reg_password.strip(),
                     ]):
@@ -147,7 +148,7 @@ if st.session_state.get("show_auth", False) and not _is_authenticated:
                             reg_username.strip(),
                             reg_password,
                             reg_fullname.strip(),
-                            reg_studentid.strip(),
+                            reg_email.strip(),
                         )
                         if reg_result is True:
                             st.success(
@@ -231,28 +232,15 @@ div[data-testid="stVerticalBlock"]:has(> div.element-container .cta-marker) butt
 """, unsafe_allow_html=True)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
+if _is_authenticated:
+    render_sidebar_auth(on_home=True)
+
 st.sidebar.markdown("""
 <div style="padding:0.25rem 0 0.75rem;">
 <div style="font-size:15px;font-weight:500;color:#0F172A;margin-bottom:4px;">CaseGen</div>
 <div style="font-size:12px;color:#94A3B8;">AI Case Study Generator</div>
 </div>
 """, unsafe_allow_html=True)
-
-if _is_authenticated:
-    user_info = st.session_state.get("user_info") or {}
-    display_name = user_info.get("full_name") or st.session_state.get("username", "User")
-    st.sidebar.markdown(f"""
-    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.6rem 0.8rem; margin:0.5rem 0 0.75rem;">
-        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#64748B;">Signed in as</div>
-        <div style="font-size:13px; font-weight:600; color:#0F172A;">{display_name}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.sidebar.button("Sign out", key="home_signout_btn", use_container_width=True):
-        st.session_state["authenticated"] = False
-        st.session_state["username"] = ""
-        st.session_state["user_info"] = None
-        st.session_state["show_auth"] = False
-        st.rerun()
 
 # ── Hero Section ──────────────────────────────────────────────────────────────
 with st.container():
