@@ -11,6 +11,7 @@ from pipeline.persistence.auth import (
     init_users_table,
     verify_login,
     register_user,
+    get_user_info,
 )
 
 st.set_page_config(
@@ -19,122 +20,147 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── Auth Initialization & Gateway ─────────────────────────────────────────────
+# Initialize local SQLite users table (idempotent, seeds team demo accounts)
 init_users_table()
 
-if not st.session_state.get("authenticated", False):
-    # Hide sidebar page navigation when not logged in
+_is_authenticated = st.session_state.get("authenticated", False)
+
+# Hide sidebar page navigation links until the user is signed in
+if not _is_authenticated:
+    st.markdown(
+        "<style>[data-testid='stSidebarNav'] { display: none !important; }</style>",
+        unsafe_allow_html=True,
+    )
+
+# ── Auth Screen (shown ONLY after clicking "Get started" while signed out) ────
+if st.session_state.get("show_auth", False) and not _is_authenticated:
     st.markdown("""
+    <div>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
     html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
-    .block-container { padding-top: 3rem !important; max-width: 920px; }
-    [data-testid="stSidebarNav"] { display: none !important; }
+    .block-container { padding-top: 2.5rem !important; max-width: 960px; }
     section[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #E2E8F0; }
+    div[data-testid="stVerticalBlock"]:has(> div.element-container .auth-card-marker) {
+        border: 1px solid #E2E8F0;
+        border-left: 6px solid #2563EB;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 2.25rem 2rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+    div[data-testid="stFormSubmitButton"] button {
+        background-color: #2563EB !important;
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        padding: 0.5rem 1rem !important;
+    }
+    div[data-testid="stFormSubmitButton"] button:hover {
+        background-color: #1D4ED8 !important;
+        color: #ffffff !important;
+    }
     </style>
+    </div>
     """, unsafe_allow_html=True)
 
     st.sidebar.markdown("""
     <div style="padding:0.25rem 0 0.75rem;">
-        <div style="font-size:15px;font-weight:500;color:#0F172A;margin-bottom:4px;">CaseGen</div>
-        <div style="font-size:12px;color:#94A3B8;">AI Case Study Generator</div>
-    </div>
-    <div style="font-size:12px;color:#64748B;line-height:1.5;margin-top:1rem;padding-top:1rem;border-top:1px solid #E2E8F0;">
-        Please sign in with your credentials to access the generation workspace.
+    <div style="font-size:15px;font-weight:500;color:#0F172A;margin-bottom:4px;">CaseGen</div>
+    <div style="font-size:12px;color:#94A3B8;">AI Case Study Generator</div>
     </div>
     """, unsafe_allow_html=True)
+    st.sidebar.divider()
+    if st.sidebar.button("← Back to Home", key="auth_back_home", use_container_width=True):
+        st.session_state["show_auth"] = False
+        st.rerun()
 
-    login_col1, login_col2 = st.columns([1.2, 1], gap="large")
+    with st.container():
+        st.markdown('<div class="auth-card-marker"></div>', unsafe_allow_html=True)
+        info_col, form_col = st.columns([1.15, 1], gap="large")
 
-    with login_col1:
-        st.markdown("""
-        <div style="padding-top:1.5rem;">
-            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#2563EB; margin-bottom:12px;">
-                CASEGEN ACCESS
-            </div>
-            <div style="font-family:'DM Serif Display', Georgia, serif; font-size:32px; font-weight:400; line-height:1.2; color:#0F172A; margin-bottom:16px;">
-                From raw company data to a publishable case study.
-            </div>
-            <div style="font-size:15px; line-height:1.6; color:#64748B; margin-bottom:24px;">
-                An intelligent multi-agent pipeline that extracts facts, discovers strategic themes,
-                crafts rigorous business narratives, and exports publication-ready Word and PDF case studies.
-            </div>
-            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem 1.25rem;">
-                <div style="font-size:12px; font-weight:600; color:#0F172A; margin-bottom:4px;">Academic Evaluation Portal</div>
-                <div style="font-size:12px; color:#64748B; line-height:1.5;">
-                    Course Project: CSE3005 Software Engineering<br>
-                    Team: Ananshi Sharma, Aditya Nadar, Sumit Singh, Dhruv Sharma
+        with info_col:
+            st.markdown("""
+            <div style="display:flex; flex-direction:column; gap:0.65rem; padding-top:0.5rem;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#2563EB;">
+                    CASEGEN WORKSPACE
+                </div>
+                <div style="font-family:'DM Serif Display', Georgia, serif; font-size:30px; font-weight:400; line-height:1.2; color:#0F172A;">
+                    Sign in to start generating.
+                </div>
+                <div style="font-size:14px; line-height:1.65; color:#64748B; margin-top:4px;">
+                    Create an account or sign in with your credentials to upload source documents,
+                    configure your case study, and access saved work.
+                </div>
+                <div style="margin-top:1rem; padding:0.9rem 1.1rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;">
+                    <div style="font-size:12px; font-weight:600; color:#0F172A; margin-bottom:4px;">New here?</div>
+                    <div style="font-size:12px; color:#64748B; line-height:1.5;">
+                        Switch to the <b>Register</b> tab to create your account first, then sign in to begin uploading documents.
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-    with login_col2:
-        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
-        tab_signin, tab_signup = st.tabs(["Sign In", "Register"])
+        with form_col:
+            tab_signin, tab_register = st.tabs(["Sign In", "Register"])
 
-        with tab_signin:
-            with st.form("login_form"):
-                username_input = st.text_input("Username", placeholder="e.g. ananshi")
-                password_input = st.text_input("Password", type="password", placeholder="Enter your password")
-                login_submitted = st.form_submit_button("Sign In", type="primary", use_container_width=True)
+            with tab_signin:
+                with st.form("login_form"):
+                    username_input = st.text_input("Username", placeholder="Enter your username")
+                    password_input = st.text_input("Password", type="password", placeholder="Enter your password")
+                    login_submitted = st.form_submit_button("Sign In", type="primary", use_container_width=True)
 
-            if login_submitted:
-                # TC03: Empty fields check
-                if not username_input.strip() or not password_input.strip():
-                    st.warning("Please enter both username and password.")
-                # TC01, TC02, TC04: Credential verification
-                elif verify_login(username_input.strip(), password_input):
-                    st.session_state["authenticated"] = True
-                    st.session_state["username"] = username_input.strip()
-                    st.rerun()
-                else:
-                    st.error("Invalid username or password.")
+                if login_submitted:
+                    if not username_input.strip() or not password_input.strip():
+                        st.warning("Please enter both username and password.")
+                    elif verify_login(username_input.strip(), password_input):
+                        uname = username_input.strip()
+                        st.session_state["authenticated"] = True
+                        st.session_state["username"] = uname
+                        st.session_state["user_info"] = get_user_info(uname)
+                        st.session_state["show_auth"] = False
+                        st.switch_page("pages/1_Upload_Documents.py")
+                    else:
+                        st.error("Invalid username or password.")
 
-        with tab_signup:
-            with st.form("register_form"):
-                reg_fullname = st.text_input("Full Name", placeholder="e.g. Ananshi Sharma")
-                reg_studentid = st.text_input("Student ID", placeholder="e.g. 240377")
-                reg_username = st.text_input("Username", placeholder="Choose username")
-                reg_password = st.text_input("Password", type="password", placeholder="Minimum 6 characters")
-                reg_submitted = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+            with tab_register:
+                with st.form("register_form"):
+                    reg_fullname = st.text_input("Full Name", placeholder="e.g. Ananshi Sharma")
+                    reg_studentid = st.text_input("Student ID", placeholder="e.g. 240377")
+                    reg_username = st.text_input("Username", placeholder="Choose a username")
+                    reg_password = st.text_input("Password", type="password", placeholder="At least 6 characters")
+                    reg_submitted = st.form_submit_button("Create Account", type="primary", use_container_width=True)
 
-            if reg_submitted:
-                if not all([reg_fullname.strip(), reg_studentid.strip(), reg_username.strip(), reg_password.strip()]):
-                    st.warning("All fields are required.")
-                else:
-                    reg_result = register_user(
-                        reg_username.strip(),
-                        reg_password,
+                if reg_submitted:
+                    if not all([
                         reg_fullname.strip(),
                         reg_studentid.strip(),
-                    )
-                    if reg_result is True:
-                        st.success(f"Account created for **{reg_username.strip()}**. Switch to Sign In to continue.")
+                        reg_username.strip(),
+                        reg_password.strip(),
+                    ]):
+                        st.warning("All fields are required.")
                     else:
-                        st.error(reg_result)
+                        reg_result = register_user(
+                            reg_username.strip(),
+                            reg_password,
+                            reg_fullname.strip(),
+                            reg_studentid.strip(),
+                        )
+                        if reg_result is True:
+                            st.success(
+                                f"Account created for **{reg_username.strip()}**. "
+                                "Switch to the **Sign In** tab to continue."
+                            )
+                        else:
+                            st.error(reg_result)
 
-    # Stop rendering the rest of the application until authenticated
     st.stop()
 
-# ── Authenticated User Sidebar Status ─────────────────────────────────────────
-with st.sidebar:
-    st.markdown(f"""
-    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.6rem 0.8rem; margin-bottom:0.75rem;">
-        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#64748B;">Signed in as</div>
-        <div style="font-size:13px; font-weight:600; color:#0F172A;">{st.session_state.get('username', 'User')}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Sign out", key="sign_out_btn", use_container_width=True):
-        st.session_state["authenticated"] = False
-        st.session_state["username"] = ""
-        st.rerun()
-    st.divider()
-
-# Offer session restore on load
-if "session_restored" not in st.session_state:
+# Offer session restore on load (only for authenticated users)
+if _is_authenticated and "session_restored" not in st.session_state:
     fs_path = get_latest_fact_sheet_path()
     case_path = get_latest_case_path()
     if fs_path or case_path:
@@ -212,6 +238,22 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+if _is_authenticated:
+    user_info = st.session_state.get("user_info") or {}
+    display_name = user_info.get("full_name") or st.session_state.get("username", "User")
+    st.sidebar.markdown(f"""
+    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.6rem 0.8rem; margin:0.5rem 0 0.75rem;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#64748B;">Signed in as</div>
+        <div style="font-size:13px; font-weight:600; color:#0F172A;">{display_name}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.sidebar.button("Sign out", key="home_signout_btn", use_container_width=True):
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = ""
+        st.session_state["user_info"] = None
+        st.session_state["show_auth"] = False
+        st.rerun()
+
 # ── Hero Section ──────────────────────────────────────────────────────────────
 with st.container():
     st.markdown('<div class="hero-marker"></div>', unsafe_allow_html=True)
@@ -246,7 +288,11 @@ with st.container():
             </div>
             """, unsafe_allow_html=True)
             if st.button("Get started", type="primary", use_container_width=True, key="get_started"):
-                st.switch_page("pages/1_Upload_Documents.py")
+                if _is_authenticated:
+                    st.switch_page("pages/1_Upload_Documents.py")
+                else:
+                    st.session_state["show_auth"] = True
+                    st.rerun()
 
 # ── Steps + formats + footer ───────────────────────────────────────────────────
 components.html("""

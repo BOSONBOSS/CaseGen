@@ -7,6 +7,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+from pipeline.persistence.auth import require_auth
+require_auth()
+
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>

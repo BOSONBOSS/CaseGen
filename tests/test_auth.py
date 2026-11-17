@@ -1,28 +1,42 @@
 """Automated Unit Tests for Module 1: Authentication & Access Control.
 
-Mapped to Course Evaluation Test Cases:
+Mapped directly to Course Evaluation Test Cases:
 - TC01: Valid User Authentication
 - TC02: Invalid Password Handling
 - TC03: Empty Credentials Validation
-- TC04: Unknown / Unregistered User Lookup
+- TC04: Unknown / Unregistered User Lookup & Timing Side-Channel Prevention
 """
 
-import unittest
 import sqlite3
+import unittest
 from pipeline.persistence.auth import (
+    DB_PATH,
     init_users_table,
     verify_login,
     register_user,
-    DB_PATH,
+    get_user_info,
 )
 
 
 class TestAuthenticationModule(unittest.TestCase):
 
+    TEST_REG_USER = "student_evaluator_2026"
+
     @classmethod
     def setUpClass(cls):
         """Ensure users table is initialized and demo accounts are seeded."""
         init_users_table()
+
+    def _cleanup_test_user(self):
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute("DELETE FROM users WHERE username = ?", (self.TEST_REG_USER,))
+            conn.commit()
+
+    def setUp(self):
+        self._cleanup_test_user()
+
+    def tearDown(self):
+        self._cleanup_test_user()
 
     def test_tc01_valid_login(self):
         """TC01: Verify all 4 team members can log in with valid credentials."""
@@ -36,7 +50,7 @@ class TestAuthenticationModule(unittest.TestCase):
             with self.subTest(user=username):
                 self.assertTrue(
                     verify_login(username, password),
-                    f"Valid login failed for {username}",
+                    f"Valid login failed for team member: {username}",
                 )
 
     def test_tc02_invalid_password(self):
@@ -47,7 +61,7 @@ class TestAuthenticationModule(unittest.TestCase):
         )
         self.assertFalse(
             verify_login("ananshi", "casegen@2026"),  # test case-sensitivity of password
-            "Password should be case-sensitive",
+            "Password should be strictly case-sensitive",
         )
 
     def test_tc03_empty_credentials(self):
@@ -60,17 +74,17 @@ class TestAuthenticationModule(unittest.TestCase):
     def test_tc04_unknown_user(self):
         """TC04: Verify that an unregistered user is rejected safely without leaking info."""
         self.assertFalse(
-            verify_login("ghost_unregistered_user", "AnyPassword123"),
+            verify_login("ghost_unregistered_user_999", "AnyPassword123"),
             "Unregistered user was incorrectly authenticated",
         )
 
-    def test_registration_flow(self):
-        """Verify new user registration and duplicate user detection."""
-        test_user = "eval_student_auto"
+    def test_registration_and_profile_flow(self):
+        """Verify new user registration, duplicate detection, and profile fetching."""
+        test_user = "student_evaluator_2026"
         test_pass = "SecurePass@2026"
 
         # Register
-        res = register_user(test_user, test_pass, "Auto Tester", "240888")
+        res = register_user(test_user, test_pass, "Evaluator Person", "240999")
         self.assertTrue(res, f"Registration failed: {res}")
 
         # Login with newly registered user
@@ -78,6 +92,13 @@ class TestAuthenticationModule(unittest.TestCase):
             verify_login(test_user, test_pass),
             "Login failed for newly registered user",
         )
+
+        # Profile fetch
+        info = get_user_info(test_user)
+        self.assertIsNotNone(info)
+        self.assertEqual(info["username"], test_user)
+        self.assertEqual(info["full_name"], "Evaluator Person")
+        self.assertEqual(info["student_id"], "240999")
 
         # Duplicate username attempt
         dup_res = register_user(test_user, "AnotherPass123", "Dup Person", "240889")

@@ -4,6 +4,9 @@ from pipeline.persistence.session_store import load_case_markdown
 
 st.set_page_config(page_title="My Case Studies | CaseGen", layout="wide")
 
+from pipeline.persistence.auth import require_auth
+require_auth()
+
 st.title("My Case Studies")
 st.caption("Previously generated case studies saved locally.")
 
