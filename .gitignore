@@ -28,4 +28,10 @@ session_backup/
 
 # Windows/macOS files
 Thumbs.db
-.DS_Storeuploads/
+.DS_Store
+
+# Uploaded documents
+uploads/
+
+# Office temporary lock files
+~$*
