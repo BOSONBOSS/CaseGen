@@ -7,12 +7,131 @@ from pipeline.persistence.session_store import (
     load_fact_sheet,
     load_case_markdown,
 )
+from pipeline.persistence.auth import (
+    init_users_table,
+    verify_login,
+    register_user,
+)
 
 st.set_page_config(
     page_title="CaseGen",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ── Auth Initialization & Gateway ─────────────────────────────────────────────
+init_users_table()
+
+if not st.session_state.get("authenticated", False):
+    # Hide sidebar page navigation when not logged in
+    st.markdown("""
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+    .block-container { padding-top: 3rem !important; max-width: 920px; }
+    [data-testid="stSidebarNav"] { display: none !important; }
+    section[data-testid="stSidebar"] { background: #ffffff !important; border-right: 1px solid #E2E8F0; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("""
+    <div style="padding:0.25rem 0 0.75rem;">
+        <div style="font-size:15px;font-weight:500;color:#0F172A;margin-bottom:4px;">CaseGen</div>
+        <div style="font-size:12px;color:#94A3B8;">AI Case Study Generator</div>
+    </div>
+    <div style="font-size:12px;color:#64748B;line-height:1.5;margin-top:1rem;padding-top:1rem;border-top:1px solid #E2E8F0;">
+        Please sign in with your credentials to access the generation workspace.
+    </div>
+    """, unsafe_allow_html=True)
+
+    login_col1, login_col2 = st.columns([1.2, 1], gap="large")
+
+    with login_col1:
+        st.markdown("""
+        <div style="padding-top:1.5rem;">
+            <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#2563EB; margin-bottom:12px;">
+                CASEGEN ACCESS
+            </div>
+            <div style="font-family:'DM Serif Display', Georgia, serif; font-size:32px; font-weight:400; line-height:1.2; color:#0F172A; margin-bottom:16px;">
+                From raw company data to a publishable case study.
+            </div>
+            <div style="font-size:15px; line-height:1.6; color:#64748B; margin-bottom:24px;">
+                An intelligent multi-agent pipeline that extracts facts, discovers strategic themes,
+                crafts rigorous business narratives, and exports publication-ready Word and PDF case studies.
+            </div>
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem 1.25rem;">
+                <div style="font-size:12px; font-weight:600; color:#0F172A; margin-bottom:4px;">Academic Evaluation Portal</div>
+                <div style="font-size:12px; color:#64748B; line-height:1.5;">
+                    Course Project: CSE3005 Software Engineering<br>
+                    Team: Ananshi Sharma, Aditya Nadar, Sumit Singh, Dhruv Sharma
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with login_col2:
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
+        tab_signin, tab_signup = st.tabs(["Sign In", "Register"])
+
+        with tab_signin:
+            with st.form("login_form"):
+                username_input = st.text_input("Username", placeholder="e.g. ananshi")
+                password_input = st.text_input("Password", type="password", placeholder="Enter your password")
+                login_submitted = st.form_submit_button("Sign In", type="primary", use_container_width=True)
+
+            if login_submitted:
+                # TC03: Empty fields check
+                if not username_input.strip() or not password_input.strip():
+                    st.warning("Please enter both username and password.")
+                # TC01, TC02, TC04: Credential verification
+                elif verify_login(username_input.strip(), password_input):
+                    st.session_state["authenticated"] = True
+                    st.session_state["username"] = username_input.strip()
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password.")
+
+        with tab_signup:
+            with st.form("register_form"):
+                reg_fullname = st.text_input("Full Name", placeholder="e.g. Ananshi Sharma")
+                reg_studentid = st.text_input("Student ID", placeholder="e.g. 240377")
+                reg_username = st.text_input("Username", placeholder="Choose username")
+                reg_password = st.text_input("Password", type="password", placeholder="Minimum 6 characters")
+                reg_submitted = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+
+            if reg_submitted:
+                if not all([reg_fullname.strip(), reg_studentid.strip(), reg_username.strip(), reg_password.strip()]):
+                    st.warning("All fields are required.")
+                else:
+                    reg_result = register_user(
+                        reg_username.strip(),
+                        reg_password,
+                        reg_fullname.strip(),
+                        reg_studentid.strip(),
+                    )
+                    if reg_result is True:
+                        st.success(f"Account created for **{reg_username.strip()}**. Switch to Sign In to continue.")
+                    else:
+                        st.error(reg_result)
+
+    # Stop rendering the rest of the application until authenticated
+    st.stop()
+
+# ── Authenticated User Sidebar Status ─────────────────────────────────────────
+with st.sidebar:
+    st.markdown(f"""
+    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.6rem 0.8rem; margin-bottom:0.75rem;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#64748B;">Signed in as</div>
+        <div style="font-size:13px; font-weight:600; color:#0F172A;">{st.session_state.get('username', 'User')}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("Sign out", key="sign_out_btn", use_container_width=True):
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = ""
+        st.rerun()
+    st.divider()
 
 # Offer session restore on load
 if "session_restored" not in st.session_state:
